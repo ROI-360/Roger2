@@ -509,7 +509,7 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db, auth, userId;
@@ -536,11 +536,15 @@
 
         async function initializeFirebase() {
             try {
-                // Use environment variables provided by the platform
-                if (typeof __firebase_config === 'undefined') {
-                    throw new Error("Configuração do Firebase não encontrada.");
-                }
-                const firebaseConfig = JSON.parse(__firebase_config);
+                // Firebase configuration provided by the user
+                const firebaseConfig = {
+                  apiKey: "AIzaSyB7ThKHgjrNvCI6RcCjYQp14u6rQx_qIL4",
+                  authDomain: "sample-firebase-ai-app-58361.firebaseapp.com",
+                  projectId: "sample-firebase-ai-app-58361",
+                  storageBucket: "sample-firebase-ai-app-58361.firebasestorage.app",
+                  messagingSenderId: "532925348387",
+                  appId: "1:532925348387:web:39362bfae7582675b20f96"
+                };
                 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -551,15 +555,13 @@
                         userId = user.uid;
                         console.log("Firebase Authenticated. User ID:", userId);
                     } else {
-                        console.log("User is not authenticated.");
+                        // This part is crucial for the anonymous sign-in to be recognized
+                        console.log("User is not authenticated yet.");
                     }
                 });
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // Attempt to sign in anonymously
+                await signInAnonymously(auth);
 
             } catch (error) {
                 console.error("Falha na inicialização do Firebase:", error);
@@ -941,7 +943,7 @@
                     const pdfDataUri = await generateContractPDF_ABNT(currentClientData, signatureDataURL);
                     showNotification("PDF gerado. Salvando no sistema...", "info");
 
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+                    const appId = 'serramar-contract-generator'; // Using a fixed App ID for this specific app
                     const contractData = {
                         ...currentClientData,
                         planName: selectedPlan.name,
