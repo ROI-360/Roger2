@@ -510,7 +510,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db, auth, userId, appId;
         let selectedPlan = {};
@@ -537,12 +537,12 @@
         async function initializeFirebase() {
             try {
                 const firebaseConfig = {
-                    apiKey: "AIzaSyCicY5hMUnda0WpFO7clIlCSu9ZrtLXfhA",
-                    authDomain: "serralead-navigator.firebaseapp.com",
-                    projectId: "serralead-navigator",
-                    storageBucket: "serralead-navigator.appspot.com",
-                    messagingSenderId: "1020242811944",
-                    appId: "1:1020242811944:web:6bbabc26382abbbc4fa91d"
+                    apiKey: "AIzaSyB7ThKHgjrNvCI6RcCjYQp14u6rQx_qIL4",
+                    authDomain: "sample-firebase-ai-app-58361.firebaseapp.com",
+                    projectId: "sample-firebase-ai-app-58361",
+                    storageBucket: "sample-firebase-ai-app-58361.appspot.com",
+                    messagingSenderId: "532925348387",
+                    appId: "1:532925348387:web:39362bfae7582675b20f96"
                 };
                 appId = firebaseConfig.appId;
                 const app = initializeApp(firebaseConfig);
