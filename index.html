@@ -10,9 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     
-    <!-- Scripts for PDF Generation -->
+    <!-- Scripts for PDF & Email -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <style>
         body {
@@ -151,29 +152,10 @@
         #notification-toast.success { background-color: #10b981; }
         #notification-toast.error { background-color: #ef4444; }
         #notification-toast.info { background-color: #3b82f6; }
-        
-        /* PDF Rendering Helper */
-        #pdf-render-container {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            background: white;
-            color: black;
-            font-family: 'Times New Roman', serif;
-            padding: 20mm;
-            width: 210mm; /* A4 width */
-        }
-        #pdf-render-container h2 { font-size: 16pt; font-weight: bold; color: #004D40; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-        #pdf-render-container h3 { font-size: 14pt; font-weight: bold; color: #00695C; margin-top: 12px; margin-bottom: 6px; }
-        #pdf-render-container p, #pdf-render-container li { font-size: 12pt; line-height: 1.5; margin-bottom: 6px; }
-        #pdf-render-container ul { list-style-position: inside; }
-        #pdf-render-container .pdf-page { page-break-after: always; padding-bottom: 20mm; }
-        #pdf-render-container .pdf-page:last-child { page-break-after: avoid; }
     </style>
 </head>
 <body class="bg-[#1A202C] text-gray-200">
     <div id="notification-toast"></div>
-    <div id="pdf-render-container"></div>
 
     <!-- PROPOSAL SECTION -->
     <main id="proposal-section" class="container mx-auto p-2 sm:p-4 md:p-8">
@@ -357,6 +339,7 @@
                 <button data-tab="obligations" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Obrigações</button>
                 <button data-tab="confidentiality" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Confidencialidade</button>
                 <button data-tab="signatures" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Assinaturas</button>
+                <button data-tab="history" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Histórico</button>
             </nav>
 
             <main id="contract-content">
@@ -484,6 +467,13 @@
                         <button id="proceed-to-checkout-btn" class="plan-button text-lg bg-green-500 hover:bg-green-600">Assinar, Gerar PDF e Pagar</button>
                     </div>
                 </section>
+                 <!-- History -->
+                <section id="history" class="tab-content hidden prose max-w-none text-gray-300">
+                    <h2 class="text-teal-500">Histórico de Contratos</h2>
+                    <div id="contract-history-list" class="space-y-4">
+                        <p>Nenhum contrato gerado ainda.</p>
+                    </div>
+                </section>
             </main>
         </div>
     </section>
@@ -510,7 +500,7 @@
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let db, auth, userId, appId;
         let selectedPlan = {};
@@ -585,108 +575,61 @@
             showNotification("Gerando PDF do contrato, por favor aguarde...", "info", 8000);
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-            const pdfContainer = document.getElementById('pdf-render-container');
-
-            pdfContainer.innerHTML = `
-                <div class="pdf-page">
-                    <h2>Visão Geral do Contrato</h2>
-                    <h3>Plano: ${selectedPlan.name}</h3>
-                    <p><strong>Valor Mensal:</strong> ${selectedPlan.price}</p>
-                    <p><strong>Objeto:</strong> Gestão de Performance de Marketing Digital para a Serramar Trekking.</p>
-                    <p><strong>Prazo Inicial:</strong> 6 meses.</p>
-                </div>
-                <div class="pdf-page">
-                    <h2>Partes Envolvidas</h2>
-                    <h3>CONTRATANTE</h3>
-                    <p><strong>Razão Social:</strong> ${clientData.nomeCompleto}</p>
-                    <p><strong>CPF/CNPJ:</strong> ${clientData.cnpj}</p>
-                    <p><strong>Endereço:</strong> ${clientData.endereco}</p>
-                    <p><strong>Telefone:</strong> ${clientData.telefone}</p>
-                    <p><strong>E-mail:</strong> ${clientData.email}</p>
-                    <h3>CONTRATADO</h3>
-                    <p><strong>Nome:</strong> Matheus Henrique Laurindo</p>
-                    <p><strong>CPF:</strong> 100.936.909-16</p>
-                    <p><strong>Endereço:</strong> Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, 89037-740</p>
-                    <p><strong>Telefone:</strong> (47) 99217-6490</p>
-                    <p><strong>E-mail:</strong> laurindomatheus40@gmail.com</p>
-                </div>
-                <div class="pdf-page">
-                    <h2>CLÁUSULA PRIMEIRA – DO OBJETO DO CONTRATO</h2>
-                    <p>O presente Contrato tem como objeto a prestação de serviços de Gestão de Performance de Marketing Digital pelo CONTRATADO para o CONTRATANTE, com foco em:</p>
-                    <ul>${selectedPlan.services.map(s => `<li>${s}</li>`).join('')}</ul>
-                </div>
-                <div class="pdf-page">
-                    <h2>CLÁUSULA SEGUNDA – DO VALOR E FORMA DE PAGAMENTO</h2>
-                    <p>Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor mensal de <strong>${selectedPlan.price}</strong>.</p>
-                    <p>O pagamento será recorrente, com a primeira cobrança na data de assinatura deste contrato e as subsequentes a cada 30 dias.</p>
-                    <p>O investimento em anúncios (orçamento de mídia) é de responsabilidade do CONTRATANTE e será pago diretamente às plataformas (ex: Facebook, Google).</p>
-                </div>
-                <div class="pdf-page">
-                    <h2>CLÁUSULA TERCEIRA – DO PRAZO E DA RESCISÃO</h2>
-                    <p>3.1. O presente contrato terá vigência de 6 (seis) meses, a contar da data de sua assinatura, sendo renovado automaticamente por iguais períodos, caso não haja manifestação contrária de qualquer das partes.</p>
-                    <p>3.2. Qualquer das partes poderá rescindir o presente contrato, a qualquer tempo, sem qualquer ônus, desde que notifique a outra parte, por escrito, com antecedência mínima de 30 (trinta) dias.</p>
-                    <p>3.3. Em caso de rescisão antecipada e imotivada por parte do CONTRATANTE antes do término do prazo inicial de 6 meses, será devida multa no valor de 20% sobre o valor restante do contrato.</p>
-                </div>
-                <div class="pdf-page">
-                    <h2>CLÁUSULA QUARTA – DAS OBRIGAÇÕES</h2>
-                    <h3>Obrigações do CONTRATADO</h3>
-                    <ul>
-                        <li>Prestar os serviços descritos na Cláusula Primeira com zelo e profissionalismo.</li>
-                        <li>Manter o CONTRATANTE informado sobre o andamento das campanhas através dos relatórios.</li>
-                        <li>Manter sigilo sobre todas as informações do CONTRATANTE.</li>
-                        <li>Não utilizar os materiais do CONTRATANTE para outros fins que não os do presente contrato.</li>
-                    </ul>
-                    <h3>Obrigações do CONTRATANTE</h3>
-                    <ul>
-                        <li>Realizar os pagamentos mensais pontualmente.</li>
-                        <li>Fornecer ao CONTRATADO todos os acessos e informações necessárias para a execução dos serviços.</li>
-                        <li>Realizar o pagamento do investimento em mídia diretamente às plataformas de anúncio.</li>
-                        <li>Aprovar os criativos e estratégias propostas em tempo hábil.</li>
-                    </ul>
-                </div>
-                <div class="pdf-page">
-                    <h2>CLÁUSULA QUINTA – DA CONFIDENCIALIDADE</h2>
-                    <p>As partes se comprometem a manter em absoluto sigilo e confidencialidade todas as informações, dados, materiais e documentos relacionados ao objeto deste contrato, não podendo, sob qualquer pretexto, divulgá-los, revelá-los, reproduzi-los ou dar conhecimento deles a terceiros.</p>
-                </div>
-                <div class="pdf-page">
-                    <h2>Assinaturas</h2>
-                    <p>E, por estarem assim justas e contratadas, as partes assinam o presente Contrato.</p>
-                    <p><strong>Local e Data:</strong> Blumenau, Santa Catarina, ${new Date().toLocaleDateString('pt-BR')}</p>
-                    <br/><br/>
-                    <img src="${signatureDataURL}" style="width: 150px; height: auto; border-bottom: 1px solid #000; padding-bottom: 2px;"/>
-                    <p style="margin-top: 2px;">${clientData.nomeCompleto}</p>
-                    <p style="font-size: 10pt;">CONTRATANTE</p>
-                    <br/><br/><br/>
-                    <p style="font-family: 'Brush Script MT', cursive; font-size: 24pt; border-bottom: 1px solid #000; padding-bottom: 2px; width: 250px;">Matheus Henrique Laurindo</p>
-                    <p style="margin-top: 2px;">Matheus Henrique Laurindo</p>
-                    <p style="font-size: 10pt;">CONTRATADO</p>
-                </div>
-            `;
-
-            const canvas = await html2canvas(pdfContainer, { scale: 2, useCORS: true, windowWidth: pdfContainer.scrollWidth, windowHeight: pdfContainer.scrollHeight });
-            const imgData = canvas.toDataURL('image/png');
-            const pdfWidth = doc.internal.pageSize.getWidth();
-            const pdfHeight = doc.internal.pageSize.getHeight();
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const ratio = canvasHeight / canvasWidth;
-            const imgHeight = pdfWidth * ratio;
-            let heightLeft = imgHeight;
-            let position = 0;
-
-            doc.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
-
-            while (heightLeft > 0) {
-                position -= pdfHeight;
-                doc.addPage();
-                doc.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-                heightLeft -= pdfHeight;
-            }
             
+            const addPageContent = async (elementId, isFirstPage) => {
+                const element = document.getElementById(elementId);
+                if (!isFirstPage) doc.addPage();
+                
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    onclone: (clonedDoc) => {
+                        const clonedSection = clonedDoc.querySelector(`#${element.id}`);
+                        clonedSection.classList.remove('hidden');
+                        clonedSection.style.fontFamily = 'Poppins, sans-serif';
+                        clonedSection.querySelectorAll('*').forEach(el => {
+                            el.style.color = '#000000';
+                        });
+                        clonedSection.querySelectorAll('.text-teal-500, .text-teal-400').forEach(el => {
+                            el.style.color = '#00796B';
+                        });
+                        const sigCanvas = clonedSection.querySelector('.signature-canvas');
+                        if (sigCanvas) {
+                            const originalCanvas = document.getElementById('signature-canvas');
+                            sigCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
+                        }
+                    }
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = doc.internal.pageSize.getHeight();
+                const imgProps = doc.getImageProperties(imgData);
+                const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                while (heightLeft > 0) {
+                    position = -heightLeft;
+                    doc.addPage();
+                    doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+            };
+            
+            const sectionIds = ["overview", "parties", "services", "financial", "term", "obligations", "confidentiality", "signatures"];
+            for (let i = 0; i < sectionIds.length; i++) {
+                await addPageContent(sectionIds[i], i === 0);
+            }
+
+            const pdfDataUri = doc.output('datauristring');
             doc.save(`Contrato_${clientData.nomeCompleto.replace(/\s/g, '_')}_${selectedPlan.name.replace(/\s/g, '_')}.pdf`);
             showNotification("PDF gerado com sucesso!", "success");
-            pdfContainer.innerHTML = ''; // Clean up
+            return pdfDataUri;
         }
 
         function copyPixKey() {
@@ -755,6 +698,92 @@
             window.scrollTo(0, 0);
         }
 
+        async function loadContractHistory() {
+            if (!userId) return;
+            const historyList = document.getElementById('contract-history-list');
+            historyList.innerHTML = '<p>Carregando histórico...</p>';
+
+            try {
+                const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'contracts'));
+                if (querySnapshot.empty) {
+                    historyList.innerHTML = '<p>Nenhum contrato gerado ainda.</p>';
+                    return;
+                }
+
+                historyList.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const date = new Date(data.signedAt).toLocaleDateString('pt-BR');
+                    const item = document.createElement('div');
+                    item.className = 'p-4 bg-gray-700 rounded-lg flex justify-between items-center';
+                    item.innerHTML = `
+                        <div>
+                            <p class="font-bold">${data.nomeCompleto} - ${data.planName}</p>
+                            <p class="text-sm text-gray-400">Assinado em: ${date}</p>
+                        </div>
+                        <div>
+                            <button class="download-pdf-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 mr-2" data-pdf="${data.pdfData}">Baixar PDF</button>
+                            <button class="delete-contract-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600" data-id="${doc.id}">Excluir</button>
+                        </div>
+                    `;
+                    historyList.appendChild(item);
+                });
+
+                document.querySelectorAll('.download-pdf-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const pdfData = e.currentTarget.getAttribute('data-pdf');
+                        const link = document.createElement('a');
+                        link.href = pdfData;
+                        link.download = `contrato.pdf`;
+                        link.click();
+                    });
+                });
+
+                document.querySelectorAll('.delete-contract-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const docId = e.currentTarget.getAttribute('data-id');
+                        if (confirm('Tem certeza que deseja excluir este contrato?')) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contracts', docId));
+                            showNotification('Contrato excluído com sucesso!', 'success');
+                            loadContractHistory();
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error loading contract history:", error);
+                historyList.innerHTML = '<p>Erro ao carregar o histórico.</p>';
+            }
+        }
+        
+        async function sendContractByEmail(clientData, pdfDataUri) {
+            showNotification("Enviando cópia do contrato por e-mail...", "info");
+
+            const pdfBase64 = pdfDataUri.split(',')[1];
+            
+            const emailParams = {
+                to_email: "laurindomatheus40@gmail.com",
+                from_name: "Proposta Serramar Trekking",
+                client_name: clientData.nomeCompleto,
+                plan_name: selectedPlan.name,
+                pdf_attachment: pdfBase64
+            };
+
+            // SUBSTITUA COM SUAS CHAVES DO EMAILJS
+            const SERVICE_ID = "YOUR_SERVICE_ID";
+            const TEMPLATE_ID = "YOUR_TEMPLATE_ID";
+            const PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+
+            try {
+                await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams, PUBLIC_KEY);
+                showNotification("Contrato enviado por e-mail com sucesso!", "success");
+            } catch (error) {
+                console.error('EmailJS error:', error);
+                showNotification("Falha ao enviar e-mail. Verifique as chaves do EmailJS.", "error");
+            }
+        }
+
+
         document.addEventListener('DOMContentLoaded', async () => {
             await initializeFirebase();
 
@@ -774,6 +803,10 @@
                     tabContents.forEach(content => {
                         content.classList.toggle('hidden', content.id !== targetId);
                     });
+
+                    if(targetId === 'history') {
+                        loadContractHistory();
+                    }
                 });
             });
             
@@ -781,7 +814,7 @@
             const contratanteForm = document.getElementById('contratante-form');
             const editContratanteBtn = document.getElementById('edit-contratante-btn');
             
-            document.getElementById('save-contratante-btn').addEventListener('click', async () => {
+            document.getElementById('save-contratante-btn').addEventListener('click', () => {
                 const dataToSave = {
                     nomeCompleto: document.getElementById('input-nome-completo').value,
                     cnpj: document.getElementById('input-cnpj').value,
@@ -883,13 +916,16 @@
                      return;
                 }
 
+                const pdfDataUri = await generateContractPDF(currentClientData, signatureDataURL);
+
                 const contractData = {
                     ...currentClientData,
                     planName: selectedPlan.name,
                     planPrice: selectedPlan.price,
                     planServices: selectedPlan.services,
                     signature: signatureDataURL,
-                    signedAt: new Date().toISOString()
+                    signedAt: new Date().toISOString(),
+                    pdfData: pdfDataUri
                 };
 
                 try {
@@ -898,7 +934,7 @@
                     await setDoc(finalContractRef, contractData);
                     showNotification("Contrato salvo com sucesso no banco de dados!", "success");
                     
-                    await generateContractPDF(currentClientData, signatureDataURL);
+                    await sendContractByEmail(currentClientData, pdfDataUri);
                     
                     showCheckout();
 
