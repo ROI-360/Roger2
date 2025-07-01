@@ -592,102 +592,153 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-            const marginLeft = 30, marginTop = 30, marginRight = 20, marginBottom = 20;
+            const marginLeft = 20, marginTop = 20, marginRight = 20;
             const pageWidth = 210;
             const usableWidth = pageWidth - marginLeft - marginRight;
-            
-            doc.setFont('times', 'normal');
-            doc.setFontSize(12);
-            
-            const lineHeight = 1.5 * 5; // Aproximadamente 1.5 espaçamento para fonte 12pt
             let y = marginTop;
 
-            const checkPageBreak = (currentY, neededHeight) => {
-                if (currentY + neededHeight > doc.internal.pageSize.height - marginBottom) {
+            doc.setFont('helvetica', 'normal');
+
+            const checkPageBreak = (currentY, neededHeight = 10) => {
+                if (currentY > doc.internal.pageSize.height - 30) {
                     doc.addPage();
                     return marginTop;
                 }
                 return currentY;
             };
+
+            const addSectionTitle = (title) => {
+                y = checkPageBreak(y, 20);
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, marginLeft, y);
+                y += 8;
+                doc.setDrawColor(200, 200, 200);
+                doc.line(marginLeft, y, pageWidth - marginRight, y);
+                y += 8;
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+            };
             
-            const addJustifiedText = (text, x, y, options) => {
-                const splitText = doc.splitTextToSize(text, options.maxWidth);
-                doc.text(splitText, x, y, { align: 'justify' });
-                return y + (splitText.length * lineHeight);
+            const addSubTitle = (title) => {
+                y = checkPageBreak(y);
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.text(title, marginLeft, y);
+                y += 6;
+                doc.setFont('helvetica', 'normal');
             };
 
-            // Título
-            doc.setFont('times', 'bold');
-            doc.text("CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE GESTÃO DE PERFORMANCE", pageWidth / 2, y, { align: 'center' });
-            y += lineHeight * 2;
+            const addText = (text, options = {}) => {
+                y = checkPageBreak(y);
+                const splitText = doc.splitTextToSize(text, usableWidth - (options.indent || 0));
+                doc.text(splitText, marginLeft + (options.indent || 0), y);
+                y += (splitText.length * 5) + (options.marginBottom || 0);
+            };
 
-            // Partes
-            doc.setFont('times', 'bold');
-            doc.text('DAS PARTES', marginLeft, y);
-            y += lineHeight;
-            doc.setFont('times', 'normal');
-            
-            let partiesText = `CONTRATANTE: ${clientData.nomeCompleto}, com sede em ${clientData.endereco}, inscrito(a) no CPF/CNPJ sob o nº ${clientData.cnpj}, doravante denominada simplesmente CONTRATANTE.`;
-            y = addJustifiedText(partiesText, marginLeft, y, { maxWidth: usableWidth });
-            y += lineHeight;
-            
-            partiesText = `CONTRATADO: Matheus Henrique Laurindo, com endereço na Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, CEP 89037-740, inscrito no CPF sob o nº 100.936.909-16, doravante denominado simplesmente CONTRATADO.`;
-            y = addJustifiedText(partiesText, marginLeft, y, { maxWidth: usableWidth });
-            y += lineHeight * 2;
+            const addKeyValue = (key, value) => {
+                y = checkPageBreak(y);
+                doc.setFont('helvetica', 'bold');
+                doc.text(key, marginLeft, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(value, marginLeft + 40, y);
+                y += 7;
+            };
 
-            // Objeto
-            doc.setFont('times', 'bold');
-            doc.text('CLÁUSULA PRIMEIRA – DO OBJETO', marginLeft, y);
-            y += lineHeight;
-            doc.setFont('times', 'normal');
-            let objectText = `O presente contrato tem por objeto a prestação de serviços de Gestão de Performance de Marketing Digital, conforme o "${selectedPlan.name}" selecionado, cujos detalhes são:`;
-            y = addJustifiedText(objectText, marginLeft, y, { maxWidth: usableWidth });
-            
+            // --- VISÃO GERAL ---
+            addSectionTitle("Visão Geral do Contrato");
+            addKeyValue("Plano:", selectedPlan.name);
+            addKeyValue("Valor Mensal:", selectedPlan.price);
+            addKeyValue("Objeto:", "Gestão de Performance de Marketing Digital para a Serramar Trekking.");
+            addKeyValue("Prazo Inicial:", "6 meses");
+            y += 5;
+
+            // --- PARTES ENVOLVIDAS ---
+            addSectionTitle("Partes Envolvidas");
+            addSubTitle("CONTRATANTE");
+            addText(`Razão Social: ${clientData.nomeCompleto}`);
+            addText(`CPF/CNPJ: ${clientData.cnpj}`);
+            addText(`Endereço: ${clientData.endereco}`);
+            addText(`Telefone: ${clientData.telefone}`);
+            addText(`E-mail: ${clientData.email}`, { marginBottom: 5 });
+
+            addSubTitle("CONTRATADO");
+            addText("Nome: Matheus Henrique Laurindo");
+            addText("CPF: 100.936.909-16");
+            addText("Endereço: Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, 89037-740");
+            addText("Telefone: (47) 99217-6490");
+            addText("E-mail: laurindomatheus40@gmail.com", { marginBottom: 5 });
+
+            // --- SERVIÇOS ---
+            addSectionTitle("CLÁUSULA PRIMEIRA – DO OBJETO DO CONTRATO");
+            addText("O presente Contrato tem como objeto a prestação de serviços de Gestão de Performance de Marketing Digital pelo CONTRATADO para o CONTRATANTE, com foco em:");
             selectedPlan.services.forEach(serv => {
-                y = checkPageBreak(y, lineHeight);
-                y = addJustifiedText(`- ${serv}`, marginLeft + 5, y, { maxWidth: usableWidth - 5 });
+                addText(`• ${serv}`, { indent: 5 });
             });
-            y += lineHeight * 2;
+            y += 5;
 
-            // Demais cláusulas (resumido para o PDF)
-            const clauses = [
-                { title: 'CLÁUSULA SEGUNDA – DO VALOR E PAGAMENTO', text: `Pelos serviços, o CONTRATANTE pagará ao CONTRATADO o valor mensal de ${selectedPlan.price}, com pagamentos recorrentes a cada 30 dias. O investimento em mídia é de responsabilidade do CONTRATANTE.` },
-                { title: 'CLÁUSULA TERCEIRA – DO PRAZO E RESCISÃO', text: `Este contrato tem vigência de 6 meses, com renovação automática. A rescisão exige aviso prévio de 30 dias. A rescisão imotivada pelo CONTRATANTE antes do prazo inicial de 6 meses incorre em multa de 20% sobre o valor restante.` },
-                { title: 'CLÁUSULA QUARTA – DAS OBRIGAÇÕES', text: `As obrigações do CONTRATADO e do CONTRATANTE são aquelas detalhadas na proposta digital, que constitui parte integrante deste contrato.` },
-                { title: 'CLÁUSULA QUINTA – DA CONFIDENCIALIDADE', text: `As partes comprometem-se a manter sigilo absoluto sobre todas as informações trocadas durante a vigência do contrato.` }
-            ];
+            // --- FINANCEIRO ---
+            addSectionTitle("CLÁUSULA SEGUNDA – DO VALOR E FORMA DE PAGAMENTO");
+            addText(`Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor mensal de ${selectedPlan.price}.`);
+            addText("O pagamento será recorrente, com a primeira cobrança na data de assinatura deste contrato e as subsequentes a cada 30 dias.");
+            addText("O investimento em anúncios (orçamento de mídia) é de responsabilidade do CONTRATANTE e será pago diretamente às plataformas (ex: Facebook, Google).", { marginBottom: 5 });
 
-            clauses.forEach(clause => {
-                y = checkPageBreak(y, lineHeight * 2);
-                doc.setFont('times', 'bold');
-                doc.text(clause.title, marginLeft, y);
-                y += lineHeight;
-                doc.setFont('times', 'normal');
-                y = addJustifiedText(clause.text, marginLeft, y, { maxWidth: usableWidth });
-                y += lineHeight;
-            });
-
-            // Assinaturas
-            y = checkPageBreak(y, 60);
-            const locationAndDate = `Blumenau, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
-            doc.text(locationAndDate, pageWidth / 2, y, { align: 'center' });
-            y += lineHeight * 4;
-
-            if (signatureDataURL) {
-                doc.addImage(signatureDataURL, 'PNG', marginLeft, y, 60, 20);
-            }
-            doc.line(marginLeft, y + 22, marginLeft + 70, y + 22);
-            doc.text(clientData.nomeCompleto, marginLeft, y + 26);
+            // --- PRAZO E RESCISÃO ---
+            addSectionTitle("CLÁUSULA TERCEIRA – DO PRAZO E DA RESCISÃO");
+            addText("3.1. O presente contrato terá vigência de 6 (seis) meses, a contar da data de sua assinatura, sendo renovado automaticamente por iguais períodos, caso não haja manifestação contrária de qualquer das partes.");
+            addText("3.2. Qualquer das partes poderá rescindir o presente contrato, a qualquer tempo, sem qualquer ônus, desde que notifique a outra parte, por escrito, com antecedência mínima de 30 (trinta) dias.");
+            addText("3.3. Em caso de rescisão antecipada e imotivada por parte do CONTRATANTE antes do término do prazo inicial de 6 meses, será devida multa no valor de 20% sobre o valor restante do contrato.", { marginBottom: 5 });
             
-            doc.line(pageWidth - marginRight - 70, y + 22, pageWidth - marginRight, y + 22);
-            doc.text('Matheus Henrique Laurindo', pageWidth - marginRight - 70, y + 26);
+            // --- OBRIGAÇÕES ---
+            addSectionTitle("CLÁUSULA QUARTA – DAS OBRIGAÇÕES");
+            addSubTitle("Obrigações do CONTRATADO");
+            const contratadoObrigacoes = [
+                "Prestar os serviços descritos na Cláusula Primeira com zelo e profissionalismo.",
+                "Manter o CONTRATANTE informado sobre o andamento das campanhas através dos relatórios.",
+                "Manter sigilo sobre todas as informações do CONTRATANTE.",
+                "Não utilizar os materiais do CONTRATANTE para outros fins que não os do presente contrato."
+            ];
+            contratadoObrigacoes.forEach(o => addText(`• ${o}`, { indent: 5 }));
+            y += 5;
 
-            // Numeração
-            const pageCount = doc.internal.getNumberOfPages();
-            for(let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.text(String(i), pageWidth - marginRight, marginTop - 15, { align: 'right' });
+            addSubTitle("Obrigações do CONTRATANTE");
+            const contratanteObrigacoes = [
+                "Realizar os pagamentos mensais pontualmente.",
+                "Fornecer ao CONTRATADO todos os acessos e informações necessárias para a execução dos serviços.",
+                "Realizar o pagamento do investimento em mídia diretamente às plataformas de anúncio.",
+                "Aprovar os criativos e estratégias propostas em tempo hábil."
+            ];
+            contratanteObrigacoes.forEach(o => addText(`• ${o}`, { indent: 5 }));
+            y += 5;
+
+            // --- CONFIDENCIALIDADE ---
+            addSectionTitle("CLÁUSULA QUINTA – DA CONFIDENCIALIDADE");
+            addText("As partes se comprometem a manter em absoluto sigilo e confidencialidade todas as informações, dados, materiais e documentos relacionados ao objeto deste contrato, não podendo, sob qualquer pretexto, divulgá-los, revelá-los, reproduzi-los ou dar conhecimento deles a terceiros.", { marginBottom: 15 });
+
+            // --- ASSINATURAS ---
+            addSectionTitle("Assinaturas");
+            addText("E, por estarem assim justas e contratadas, as partes assinam o presente Contrato.");
+            addText(`Local e Data: Blumenau, Santa Catarina, ${new Date().toLocaleDateString('pt-BR')}`, { marginBottom: 20 });
+            
+            y = checkPageBreak(y, 60);
+
+            const signatureY = y;
+            const contractorX = marginLeft;
+            const contractedX = pageWidth / 2 + 10;
+            
+            if (signatureDataURL) {
+                doc.addImage(signatureDataURL, 'PNG', contractorX, signatureY, 70, 25);
             }
+            doc.line(contractorX, signatureY + 30, contractorX + 70, signatureY + 30);
+            doc.text(clientData.nomeCompleto, contractorX, signatureY + 35);
+            doc.text("CONTRATANTE", contractorX, signatureY + 40);
+
+            doc.setFont('helvetica', 'italic');
+            doc.text('Matheus Henrique Laurindo', contractedX, signatureY + 25);
+            doc.setFont('helvetica', 'normal');
+            doc.line(contractedX, signatureY + 30, contractedX + 70, signatureY + 30);
+            doc.text('Matheus Henrique Laurindo', contractedX, signatureY + 35);
+            doc.text("CONTRATADO", contractedX, signatureY + 40);
 
             const pdfDataUri = doc.output('datauristring');
             doc.save(`Contrato_${clientData.nomeCompleto.replace(/\s/g, '_')}.pdf`);
