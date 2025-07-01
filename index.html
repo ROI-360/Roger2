@@ -10,10 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     
-    <!-- Scripts for PDF & Email -->
+    <!-- Scripts for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
     <style>
         body {
@@ -57,12 +56,18 @@
             font-weight: 700;
             text-decoration: none;
             font-size: 1.1rem;
-            transition: background 0.3s;
-            display: inline-block;
+            transition: background 0.3s, opacity 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             margin-top: auto;
         }
-        .plan-button:hover {
+        .plan-button:hover:not(:disabled) {
             background: #388e3c;
+        }
+        .plan-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         .timeline {
             position: relative;
@@ -152,6 +157,16 @@
         #notification-toast.success { background-color: #10b981; }
         #notification-toast.error { background-color: #ef4444; }
         #notification-toast.info { background-color: #3b82f6; }
+        .spinner {
+            animation: spin 1s linear infinite;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-[#1A202C] text-gray-200">
@@ -339,7 +354,6 @@
                 <button data-tab="obligations" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Obrigações</button>
                 <button data-tab="confidentiality" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Confidencialidade</button>
                 <button data-tab="signatures" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Assinaturas</button>
-                <button data-tab="history" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Histórico</button>
             </nav>
 
             <main id="contract-content">
@@ -419,27 +433,27 @@
                 </section>
                 <!-- Obligations -->
                 <section id="obligations" class="tab-content hidden prose max-w-none text-gray-300">
-                     <h2 class="text-teal-500">CLÁUSULA QUARTA – DAS OBRIGAÇÕES</h2>
+                     <h2 class="text-teal-500">CLÁUSULA QUARTA – DAS OBRIGAções</h2>
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATADO</h3>
+                         <div>
+                             <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATADO</h3>
                             <ul class="list-disc list-inside space-y-2">
                                 <li>Prestar os serviços descritos na Cláusula Primeira com zelo e profissionalismo.</li>
                                 <li>Manter o CONTRATANTE informado sobre o andamento das campanhas através dos relatórios.</li>
                                 <li>Manter sigilo sobre todas as informações do CONTRATANTE.</li>
                                 <li>Não utilizar os materiais do CONTRATANTE para outros fins que não os do presente contrato.</li>
                             </ul>
-                        </div>
-                        <div>
-                             <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATANTE</h3>
+                         </div>
+                         <div>
+                              <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATANTE</h3>
                             <ul class="list-disc list-inside space-y-2">
                                 <li>Realizar os pagamentos mensais pontualmente.</li>
                                 <li>Fornecer ao CONTRATADO todos os acessos e informações necessárias para a execução dos serviços.</li>
                                 <li>Realizar o pagamento do investimento em mídia diretamente às plataformas de anúncio.</li>
                                 <li>Aprovar os criativos e estratégias propostas em tempo hábil.</li>
                             </ul>
-                        </div>
-                     </div>
+                         </div>
+                       </div>
                 </section>
                 <!-- Confidentiality -->
                 <section id="confidentiality" class="tab-content hidden prose max-w-none text-gray-300">
@@ -464,14 +478,10 @@
                         </div>
                     </div>
                     <div class="text-center mt-12">
-                        <button id="proceed-to-checkout-btn" class="plan-button text-lg bg-green-500 hover:bg-green-600">Assinar, Gerar PDF e Pagar</button>
-                    </div>
-                </section>
-                 <!-- History -->
-                <section id="history" class="tab-content hidden prose max-w-none text-gray-300">
-                    <h2 class="text-teal-500">Histórico de Contratos</h2>
-                    <div id="contract-history-list" class="space-y-4">
-                        <p>Nenhum contrato gerado ainda.</p>
+                        <button id="proceed-to-checkout-btn" class="plan-button text-lg bg-green-500 hover:bg-green-600">
+                            <span id="btn-text">Assinar, Gerar PDF e Pagar</span>
+                            <div id="btn-spinner" class="spinner hidden"></div>
+                        </button>
                     </div>
                 </section>
             </main>
@@ -499,10 +509,10 @@
     <script type="module">
         // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let db, auth, userId, appId;
+        let db, auth, userId;
         let selectedPlan = {};
         let currentClientData = null; // Local state for client data
         
@@ -526,28 +536,34 @@
 
         async function initializeFirebase() {
             try {
-                const firebaseConfig = {
-                    apiKey: "AIzaSyB7ThKHgjrNvCI6RcCjYQp14u6rQx_qIL4",
-                    authDomain: "sample-firebase-ai-app-58361.firebaseapp.com",
-                    projectId: "sample-firebase-ai-app-58361",
-                    storageBucket: "sample-firebase-ai-app-58361.appspot.com",
-                    messagingSenderId: "532925348387",
-                    appId: "1:532925348387:web:39362bfae7582675b20f96"
-                };
-                appId = firebaseConfig.appId;
+                // Use environment variables provided by the platform
+                if (typeof __firebase_config === 'undefined') {
+                    throw new Error("Configuração do Firebase não encontrada.");
+                }
+                const firebaseConfig = JSON.parse(__firebase_config);
+                
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                await signInAnonymously(auth);
-                userId = auth.currentUser.uid;
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                if (error.code === 'auth/configuration-not-found') {
-                    showNotification("FALHA NA CONEXÃO: Habilite a 'Autenticação Anônima' no seu painel do Firebase.", "error", 10000);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Firebase Authenticated. User ID:", userId);
+                    } else {
+                        console.log("User is not authenticated.");
+                    }
+                });
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    showNotification("Erro ao conectar com o sistema.", "error");
+                    await signInAnonymously(auth);
                 }
+
+            } catch (error) {
+                console.error("Falha na inicialização do Firebase:", error);
+                showNotification("Erro ao conectar com o sistema de contratos.", "error", 10000);
             }
         }
 
@@ -564,6 +580,7 @@
             document.getElementById('overview-price').textContent = selectedPlan.price;
             document.getElementById('financial-price').textContent = selectedPlan.price;
             document.getElementById('signature-date-location').textContent = `Blumenau, Santa Catarina, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+            
             proposalSection.classList.add('hidden');
             checkoutSection.classList.add('hidden');
             contractSection.classList.remove('hidden');
@@ -571,218 +588,170 @@
             window.scrollTo(0, 0);
         }
         
-        async function generateContractPDF(clientData, signatureDataURL) {
-            showNotification("Gerando PDF do contrato, por favor aguarde...", "info", 8000);
+        async function generateContractPDF_ABNT(clientData, signatureDataURL) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+            const marginLeft = 30, marginTop = 30, marginRight = 20, marginBottom = 20;
+            const pageWidth = 210;
+            const usableWidth = pageWidth - marginLeft - marginRight;
             
-            const addPageContent = async (elementId, isFirstPage) => {
-                const element = document.getElementById(elementId);
-                if (!isFirstPage) doc.addPage();
-                
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true,
-                    onclone: (clonedDoc) => {
-                        const clonedSection = clonedDoc.querySelector(`#${element.id}`);
-                        clonedSection.classList.remove('hidden');
-                        clonedSection.style.fontFamily = 'Poppins, sans-serif';
-                        clonedSection.querySelectorAll('*').forEach(el => {
-                            el.style.color = '#000000';
-                        });
-                        clonedSection.querySelectorAll('.text-teal-500, .text-teal-400').forEach(el => {
-                            el.style.color = '#00796B';
-                        });
-                        const sigCanvas = clonedSection.querySelector('.signature-canvas');
-                        if (sigCanvas) {
-                            const originalCanvas = document.getElementById('signature-canvas');
-                            sigCanvas.getContext('2d').drawImage(originalCanvas, 0, 0);
-                        }
-                    }
-                });
+            doc.setFont('times', 'normal');
+            doc.setFontSize(12);
+            
+            const lineHeight = 1.5 * 5; // Aproximadamente 1.5 espaçamento para fonte 12pt
+            let y = marginTop;
 
-                const imgData = canvas.toDataURL('image/jpeg', 0.85);
-                const pdfWidth = doc.internal.pageSize.getWidth();
-                const pdfHeight = doc.internal.pageSize.getHeight();
-                const imgProps = doc.getImageProperties(imgData);
-                const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-                heightLeft -= pdfHeight;
-
-                while (heightLeft > 0) {
-                    position = -heightLeft;
+            const checkPageBreak = (currentY, neededHeight) => {
+                if (currentY + neededHeight > doc.internal.pageSize.height - marginBottom) {
                     doc.addPage();
-                    doc.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-                    heightLeft -= pdfHeight;
+                    return marginTop;
                 }
+                return currentY;
             };
             
-            const sectionIds = ["overview", "parties", "services", "financial", "term", "obligations", "confidentiality", "signatures"];
-            for (let i = 0; i < sectionIds.length; i++) {
-                await addPageContent(sectionIds[i], i === 0);
+            const addJustifiedText = (text, x, y, options) => {
+                const splitText = doc.splitTextToSize(text, options.maxWidth);
+                doc.text(splitText, x, y, { align: 'justify' });
+                return y + (splitText.length * lineHeight);
+            };
+
+            // Título
+            doc.setFont('times', 'bold');
+            doc.text("CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE GESTÃO DE PERFORMANCE", pageWidth / 2, y, { align: 'center' });
+            y += lineHeight * 2;
+
+            // Partes
+            doc.setFont('times', 'bold');
+            doc.text('DAS PARTES', marginLeft, y);
+            y += lineHeight;
+            doc.setFont('times', 'normal');
+            
+            let partiesText = `CONTRATANTE: ${clientData.nomeCompleto}, com sede em ${clientData.endereco}, inscrito(a) no CPF/CNPJ sob o nº ${clientData.cnpj}, doravante denominada simplesmente CONTRATANTE.`;
+            y = addJustifiedText(partiesText, marginLeft, y, { maxWidth: usableWidth });
+            y += lineHeight;
+            
+            partiesText = `CONTRATADO: Matheus Henrique Laurindo, com endereço na Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, CEP 89037-740, inscrito no CPF sob o nº 100.936.909-16, doravante denominado simplesmente CONTRATADO.`;
+            y = addJustifiedText(partiesText, marginLeft, y, { maxWidth: usableWidth });
+            y += lineHeight * 2;
+
+            // Objeto
+            doc.setFont('times', 'bold');
+            doc.text('CLÁUSULA PRIMEIRA – DO OBJETO', marginLeft, y);
+            y += lineHeight;
+            doc.setFont('times', 'normal');
+            let objectText = `O presente contrato tem por objeto a prestação de serviços de Gestão de Performance de Marketing Digital, conforme o "${selectedPlan.name}" selecionado, cujos detalhes são:`;
+            y = addJustifiedText(objectText, marginLeft, y, { maxWidth: usableWidth });
+            
+            selectedPlan.services.forEach(serv => {
+                y = checkPageBreak(y, lineHeight);
+                y = addJustifiedText(`- ${serv}`, marginLeft + 5, y, { maxWidth: usableWidth - 5 });
+            });
+            y += lineHeight * 2;
+
+            // Demais cláusulas (resumido para o PDF)
+            const clauses = [
+                { title: 'CLÁUSULA SEGUNDA – DO VALOR E PAGAMENTO', text: `Pelos serviços, o CONTRATANTE pagará ao CONTRATADO o valor mensal de ${selectedPlan.price}, com pagamentos recorrentes a cada 30 dias. O investimento em mídia é de responsabilidade do CONTRATANTE.` },
+                { title: 'CLÁUSULA TERCEIRA – DO PRAZO E RESCISÃO', text: `Este contrato tem vigência de 6 meses, com renovação automática. A rescisão exige aviso prévio de 30 dias. A rescisão imotivada pelo CONTRATANTE antes do prazo inicial de 6 meses incorre em multa de 20% sobre o valor restante.` },
+                { title: 'CLÁUSULA QUARTA – DAS OBRIGAÇÕES', text: `As obrigações do CONTRATADO e do CONTRATANTE são aquelas detalhadas na proposta digital, que constitui parte integrante deste contrato.` },
+                { title: 'CLÁUSULA QUINTA – DA CONFIDENCIALIDADE', text: `As partes comprometem-se a manter sigilo absoluto sobre todas as informações trocadas durante a vigência do contrato.` }
+            ];
+
+            clauses.forEach(clause => {
+                y = checkPageBreak(y, lineHeight * 2);
+                doc.setFont('times', 'bold');
+                doc.text(clause.title, marginLeft, y);
+                y += lineHeight;
+                doc.setFont('times', 'normal');
+                y = addJustifiedText(clause.text, marginLeft, y, { maxWidth: usableWidth });
+                y += lineHeight;
+            });
+
+            // Assinaturas
+            y = checkPageBreak(y, 60);
+            const locationAndDate = `Blumenau, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+            doc.text(locationAndDate, pageWidth / 2, y, { align: 'center' });
+            y += lineHeight * 4;
+
+            if (signatureDataURL) {
+                doc.addImage(signatureDataURL, 'PNG', marginLeft, y, 60, 20);
+            }
+            doc.line(marginLeft, y + 22, marginLeft + 70, y + 22);
+            doc.text(clientData.nomeCompleto, marginLeft, y + 26);
+            
+            doc.line(pageWidth - marginRight - 70, y + 22, pageWidth - marginRight, y + 22);
+            doc.text('Matheus Henrique Laurindo', pageWidth - marginRight - 70, y + 26);
+
+            // Numeração
+            const pageCount = doc.internal.getNumberOfPages();
+            for(let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.text(String(i), pageWidth - marginRight, marginTop - 15, { align: 'right' });
             }
 
             const pdfDataUri = doc.output('datauristring');
-            doc.save(`Contrato_${clientData.nomeCompleto.replace(/\s/g, '_')}_${selectedPlan.name.replace(/\s/g, '_')}.pdf`);
-            showNotification("PDF gerado com sucesso!", "success");
+            doc.save(`Contrato_${clientData.nomeCompleto.replace(/\s/g, '_')}.pdf`);
             return pdfDataUri;
-        }
-
-        function copyPixKey() {
-            const pixKeyInput = document.getElementById('pix-key-input');
-            pixKeyInput.select();
-            pixKeyInput.setSelectionRange(0, 99999); 
-            try {
-                document.execCommand('copy');
-                showNotification("Chave PIX copiada!", "success");
-            } catch (err) {
-                showNotification("Erro ao copiar a chave.", "error");
-            }
         }
 
         function showCheckout() {
             document.getElementById('checkout-summary').querySelector('span').textContent = selectedPlan.name;
             const pixContainer = document.getElementById('pix-container');
-            const pixKeyDesbravador = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed795204000053039865406900.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481225335ASA63043439";
-            const pixKeyConquistador = "00020126800014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed790218Plano Conquistador52040000530398654071400.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481261877ASA6304733F";
-            const pixKeyExpedicionario = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654072100.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481299721ASA63042A32";
-            const pixKeyCume = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654073000.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481300745ASA63048680";
-            
-            let pixKey = '';
-            if (selectedPlan.name === "Plano Desbravador") {
-                pixKey = pixKeyDesbravador;
-            } else if (selectedPlan.name === "Plano Conquistador") {
-                pixKey = pixKeyConquistador;
-            } else if (selectedPlan.name === "Plano Expedicionário") {
-                pixKey = pixKeyExpedicionario;
-            } else if (selectedPlan.name === "Plano Cume") {
-                pixKey = pixKeyCume;
-            }
+
+            const pixKeys = {
+                desbravador: "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed795204000053039865406900.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481225335ASA63043439",
+                conquistador: "00020126800014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed790218Plano Conquistador52040000530398654071400.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481261877ASA6304733F",
+                expedicionario: "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654072100.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481299721ASA63042A32",
+                cume: "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654073000.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481300745ASA63048680"
+            };
+            const planKey = Object.keys(planDetails).find(key => planDetails[key].name === selectedPlan.name);
+            const pixKey = pixKeys[planKey];
 
             if (pixKey) {
                 pixContainer.innerHTML = `
-                    <h3 class="text-xl font-bold text-white title-shadow mb-4">PIX</h3>
-                    <p class="text-gray-400 mb-4">Aponte a câmera do seu celular para o QR Code.</p>
-                    <div class="bg-white p-2 rounded-md inline-block">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixKey)}" alt="QR Code PIX">
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-xs text-gray-400">Ou copie a chave:</p>
-                        <div class="flex items-center justify-center mt-1">
-                            <input type="text" id="pix-key-input" class="bg-gray-800 text-gray-300 text-xs p-1 rounded-l-md w-full" value="${pixKey}" readonly>
-                            <button id="copy-pix-key-btn" class="bg-teal-500 text-white p-2 rounded-r-md hover:bg-teal-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </button>
+                    <h3 class="text-xl font-bold text-white title-shadow mb-4">Pagamento via PIX</h3>
+                    <p class="text-gray-400 mb-4">Aponte a câmera do seu celular para o QR Code ou copie a chave abaixo.</p>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-md inline-block">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pixKey)}"
+                                 alt="QR Code PIX" width="180" height="180" />
                         </div>
+                        <div class="mt-4 w-full max-w-md">
+                            <label for="pix-key-input" class="block text-xs text-gray-400 mb-1 text-left">Chave PIX:</label>
+                            <div class="flex items-center">
+                                <input type="text" id="pix-key-input" aria-label="Chave PIX" class="bg-gray-800 text-gray-300 text-xs p-1 rounded-l-md w-full" value="${pixKey}" readonly>
+                                <button id="copy-pix-key-btn" class="bg-teal-500 text-white p-2 rounded-r-md hover:bg-teal-600" aria-label="Copiar chave PIX" title="Copiar chave PIX">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <span id="copy-feedback" class="text-green-400 text-xs mt-2 hidden">Chave copiada!</span>
+                    </div>
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-400 text-xs">Após o pagamento, envie o comprovante para <strong>laurindomatheus40@gmail.com</strong> ou WhatsApp <strong>(47) 99217-6490</strong>.</p>
                     </div>
                 `;
-                document.getElementById('copy-pix-key-btn').addEventListener('click', copyPixKey);
+                document.getElementById('copy-pix-key-btn').addEventListener('click', () => {
+                    const pixKeyInput = document.getElementById('pix-key-input');
+                    pixKeyInput.select();
+                    pixKeyInput.setSelectionRange(0, 99999);
+                    try {
+                        document.execCommand('copy');
+                        showNotification("Chave PIX copiada!", "success");
+                    } catch (_) {
+                        showNotification("Erro ao copiar a chave.", "error");
+                    }
+                });
             } else {
-                pixContainer.innerHTML = `
-                    <h3 class="text-xl font-bold text-white title-shadow mb-4">PIX</h3>
-                    <p class="text-gray-400 mb-4">Entre em contato para solicitar a chave PIX para este plano.</p>
-                    <div class="bg-gray-700 p-2 rounded-md inline-flex items-center justify-center w-[166px] h-[166px]">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                `;
+                pixContainer.innerHTML = `<p class="text-gray-400">Entre em contato para solicitar a chave PIX.</p>`;
             }
 
             contractSection.classList.add('hidden');
             checkoutSection.classList.remove('hidden');
             window.scrollTo(0, 0);
         }
-
-        async function loadContractHistory() {
-            if (!userId) return;
-            const historyList = document.getElementById('contract-history-list');
-            historyList.innerHTML = '<p>Carregando histórico...</p>';
-
-            try {
-                const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'contracts'));
-                if (querySnapshot.empty) {
-                    historyList.innerHTML = '<p>Nenhum contrato gerado ainda.</p>';
-                    return;
-                }
-
-                historyList.innerHTML = '';
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const date = new Date(data.signedAt).toLocaleDateString('pt-BR');
-                    const item = document.createElement('div');
-                    item.className = 'p-4 bg-gray-700 rounded-lg flex justify-between items-center';
-                    item.innerHTML = `
-                        <div>
-                            <p class="font-bold">${data.nomeCompleto} - ${data.planName}</p>
-                            <p class="text-sm text-gray-400">Assinado em: ${date}</p>
-                        </div>
-                        <div>
-                            <button class="download-pdf-btn bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 mr-2" data-pdf="${data.pdfData}">Baixar PDF</button>
-                            <button class="delete-contract-btn bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600" data-id="${doc.id}">Excluir</button>
-                        </div>
-                    `;
-                    historyList.appendChild(item);
-                });
-
-                document.querySelectorAll('.download-pdf-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const pdfData = e.currentTarget.getAttribute('data-pdf');
-                        const link = document.createElement('a');
-                        link.href = pdfData;
-                        link.download = `contrato.pdf`;
-                        link.click();
-                    });
-                });
-
-                document.querySelectorAll('.delete-contract-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const docId = e.currentTarget.getAttribute('data-id');
-                        if (confirm('Tem certeza que deseja excluir este contrato?')) {
-                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'contracts', docId));
-                            showNotification('Contrato excluído com sucesso!', 'success');
-                            loadContractHistory();
-                        }
-                    });
-                });
-
-            } catch (error) {
-                console.error("Error loading contract history:", error);
-                historyList.innerHTML = '<p>Erro ao carregar o histórico.</p>';
-            }
-        }
-        
-        async function sendContractByEmail(clientData, pdfDataUri) {
-            showNotification("Enviando cópia do contrato por e-mail...", "info");
-
-            const pdfBase64 = pdfDataUri.split(',')[1];
-            
-            const emailParams = {
-                to_email: "laurindomatheus40@gmail.com",
-                from_name: "Proposta Serramar Trekking",
-                client_name: clientData.nomeCompleto,
-                plan_name: selectedPlan.name,
-                pdf_attachment: pdfBase64
-            };
-
-            // SUBSTITUA COM SUAS CHAVES DO EMAILJS
-            const SERVICE_ID = "YOUR_SERVICE_ID";
-            const TEMPLATE_ID = "YOUR_TEMPLATE_ID";
-            const PUBLIC_KEY = "YOUR_PUBLIC_KEY";
-
-            try {
-                await emailjs.send(SERVICE_ID, TEMPLATE_ID, emailParams, PUBLIC_KEY);
-                showNotification("Contrato enviado por e-mail com sucesso!", "success");
-            } catch (error) {
-                console.error('EmailJS error:', error);
-                showNotification("Falha ao enviar e-mail. Verifique as chaves do EmailJS.", "error");
-            }
-        }
-
 
         document.addEventListener('DOMContentLoaded', async () => {
             await initializeFirebase();
@@ -796,17 +765,11 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     const targetId = e.currentTarget.getAttribute('data-tab');
-                    
                     tabs.forEach(t => t.classList.remove('active'));
                     e.currentTarget.classList.add('active');
-
                     tabContents.forEach(content => {
                         content.classList.toggle('hidden', content.id !== targetId);
                     });
-
-                    if(targetId === 'history') {
-                        loadContractHistory();
-                    }
                 });
             });
             
@@ -826,25 +789,22 @@
                     showNotification("Nome e CPF/CNPJ são obrigatórios.", "error");
                     return;
                 }
-
-                currentClientData = dataToSave; // Save to local variable
-                
+                currentClientData = dataToSave;
                 document.getElementById('display-nome-completo').textContent = dataToSave.nomeCompleto;
                 document.getElementById('display-cnpj').textContent = dataToSave.cnpj;
                 document.getElementById('display-endereco').textContent = dataToSave.endereco;
                 document.getElementById('display-telefone').textContent = dataToSave.telefone;
                 document.getElementById('display-email').textContent = dataToSave.email;
-                
                 contratanteForm.classList.add('hidden');
                 contratanteDisplay.classList.remove('hidden');
-                showNotification("Dados do contratante salvos com sucesso.", "success");
+                showNotification("Dados do contratante salvos.", "success");
             });
 
             editContratanteBtn.addEventListener('click', () => {
                 contratanteDisplay.classList.add('hidden');
                 contratanteForm.classList.remove('hidden');
             });
-
+            
             const signatureCanvas = document.getElementById('signature-canvas');
             const signatureCtx = signatureCanvas.getContext('2d');
             let drawing = false;
@@ -855,7 +815,6 @@
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 return { x: clientX - rect.left, y: clientY - rect.top };
             }
-
             const startDrawing = (e) => { e.preventDefault(); drawing = true; const { x, y } = getCoords(e); signatureCtx.moveTo(x, y); };
             const endDrawing = () => { drawing = false; signatureCtx.beginPath(); };
             const draw = (e) => {
@@ -870,7 +829,6 @@
                 signatureCtx.beginPath();
                 signatureCtx.moveTo(x, y);
             };
-
             signatureCanvas.addEventListener('mousedown', startDrawing);
             signatureCanvas.addEventListener('mouseup', endDrawing);
             signatureCanvas.addEventListener('mousemove', draw);
@@ -882,72 +840,87 @@
             document.getElementById('clear-signature-btn').addEventListener('click', () => {
                 signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
             });
+            
+            document.getElementById('proceed-to-checkout-btn').addEventListener('click', async (e) => {
+                const button = e.currentTarget;
+                const btnText = document.getElementById('btn-text');
+                const btnSpinner = document.getElementById('btn-spinner');
 
-            document.getElementById('proceed-to-checkout-btn').addEventListener('click', async () => {
+                button.disabled = true;
+                btnText.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+
                 if (!currentClientData) {
                     showNotification("Por favor, preencha e salve os dados do contratante na aba 'Partes'.", "error");
                     document.querySelector('[data-tab="parties"]').click();
+                    button.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
                     return;
                 }
-                
                 const docId = currentClientData.cnpj ? currentClientData.cnpj.replace(/\D/g,'') : '';
-
                 if (!currentClientData.nomeCompleto || !docId || !currentClientData.email) {
-                    showNotification("Dados do contratante incompletos. Por favor, verifique e salve novamente na aba 'Partes'.", "error");
+                    showNotification("Dados do contratante incompletos.", "error");
                     document.querySelector('[data-tab="parties"]').click();
+                    button.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
                     return;
                 }
-                
+
                 const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = signatureCanvas.width;
-                tempCanvas.height = signatureCanvas.height;
+                tempCanvas.width = signatureCanvas.width; tempCanvas.height = signatureCanvas.height;
                 const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.fillStyle = '#f7fafc';
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.fillStyle = '#fff'; tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 tempCtx.drawImage(signatureCanvas, 0, 0);
                 const signatureDataURL = tempCanvas.toDataURL('image/png');
-
                 const emptyCanvas = document.createElement('canvas');
-                emptyCanvas.width = signatureCanvas.width;
-                emptyCanvas.height = signatureCanvas.height;
-                if (signatureDataURL === emptyCanvas.toDataURL()) {
-                     showNotification("A assinatura do contratante é obrigatória.", "error");
-                     document.querySelector('[data-tab="signatures"]').click();
-                     return;
+                emptyCanvas.width = signatureCanvas.width; emptyCanvas.height = signatureCanvas.height;
+                if (signatureCanvas.toDataURL() === emptyCanvas.toDataURL()) {
+                    showNotification("A assinatura do contratante é obrigatória.", "error");
+                    document.querySelector('[data-tab="signatures"]').click();
+                    button.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
+                    return;
                 }
 
-                const pdfDataUri = await generateContractPDF(currentClientData, signatureDataURL);
-
-                const contractData = {
-                    ...currentClientData,
-                    planName: selectedPlan.name,
-                    planPrice: selectedPlan.price,
-                    planServices: selectedPlan.services,
-                    signature: signatureDataURL,
-                    signedAt: new Date().toISOString(),
-                    pdfData: pdfDataUri
-                };
-
                 try {
+                    showNotification("Gerando PDF do contrato...", "info");
+                    const pdfDataUri = await generateContractPDF_ABNT(currentClientData, signatureDataURL);
+                    showNotification("PDF gerado. Salvando no sistema...", "info");
+
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+                    const contractData = {
+                        ...currentClientData,
+                        planName: selectedPlan.name,
+                        planPrice: selectedPlan.price,
+                        planServices: selectedPlan.services,
+                        signature: signatureDataURL,
+                        signedAt: new Date().toISOString(),
+                        pdfData: pdfDataUri
+                    };
                     if (!userId) throw new Error("Usuário não autenticado.");
                     const finalContractRef = doc(db, 'artifacts', appId, 'public', 'data', 'contracts', docId);
                     await setDoc(finalContractRef, contractData);
-                    showNotification("Contrato salvo com sucesso no banco de dados!", "success");
-                    
-                    await sendContractByEmail(currentClientData, pdfDataUri);
-                    
+                    showNotification("Contrato salvo com sucesso!", "success");
+
                     showCheckout();
 
                 } catch (error) {
-                    console.error("Error saving/generating contract:", error);
-                    showNotification("Erro ao processar o contrato. Tente novamente.", "error");
+                    console.error("Erro ao processar o contrato:", error);
+                    showNotification(`Erro: ${error.message}`, "error");
+                } finally {
+                    button.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
                 }
             });
 
             document.getElementById('back-to-proposal-btn').addEventListener('click', () => {
                 checkoutSection.classList.add('hidden');
                 proposalSection.classList.remove('hidden');
-                window.scrollTo(0,0);
+                window.scrollTo(0, 0);
             });
         });
     </script>
