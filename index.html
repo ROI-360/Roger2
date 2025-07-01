@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposta Estratégica Interativa | Serramar Trekking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
+    <!-- Scripts for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(180deg, #1A202C 0%, #2D3748 100%);
+        }
+        .section-gradient-box {
+            background: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 100%;
+        }
+        .strong-shadow-box {
+            box-shadow: 0px 10px 40px rgba(0, 0, 0, 1), 0px 20px 60px rgba(0, 0, 0, 0.8);
+            background-color: #2D3748;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .strong-shadow-box .card-content {
+            flex-grow: 1;
+        }
+        .icon-highlight {
+            font-size: 2.5rem;
+            color: #4CAF50;
+            margin-bottom: 0.75rem;
+            text-shadow: 0px 0px 20px rgba(0, 0, 0, 1), 0px 0px 30px rgba(0, 0, 0, 0.8);
+        }
+        .title-shadow {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        .plan-button {
+            background: #4CAF50;
+            color: #fff;
+            padding: 0.75rem 2rem;
+            border-radius: 999px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+            display: inline-block;
+            margin-top: auto;
+        }
+        .plan-button:hover {
+            background: #388e3c;
+        }
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 1.5rem;
+            height: 100%;
+            width: 4px;
+            background: #4CAF50;
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 4rem;
+            margin-bottom: 2rem;
+        }
+        .timeline-item:last-child {
+            margin-bottom: 0;
+        }
+        .timeline-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: #2D3748;
+            border: 4px solid #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #4CAF50;
+        }
+        /* Contract Styles */
+        .tab-button.active {
+            border-color: #4CAF50;
+            color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        .tab-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .signature-canvas {
+            border: 1px solid #4a5568;
+            background-color: #f7fafc;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #4a5568;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            color: #e2e8f0;
+            background-color: #2d3748;
+        }
+        .tab-content.hidden, .form-section.hidden { display: none; }
+        #notification-toast {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px; border-radius: 8px;
+            color: white; font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        #notification-toast.show {
+            opacity: 1; visibility: visible;
+            transform: translate(-50%, -10px);
+        }
+        #notification-toast.success { background-color: #10b981; }
+        #notification-toast.error { background-color: #ef4444; }
+        #notification-toast.info { background-color: #3b82f6; }
+        
+        /* PDF Rendering Helper */
+        #pdf-render-container {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            background: white;
+            color: black;
+            font-family: 'Times New Roman', serif;
+            padding: 20mm;
+            width: 210mm; /* A4 width */
+        }
+        #pdf-render-container h2 { font-size: 16pt; font-weight: bold; color: #004D40; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+        #pdf-render-container h3 { font-size: 14pt; font-weight: bold; color: #00695C; margin-top: 12px; margin-bottom: 6px; }
+        #pdf-render-container p, #pdf-render-container li { font-size: 12pt; line-height: 1.5; margin-bottom: 6px; }
+        #pdf-render-container ul { list-style-position: inside; }
+        #pdf-render-container .pdf-page { page-break-after: always; padding-bottom: 20mm; }
+        #pdf-render-container .pdf-page:last-child { page-break-after: avoid; }
+    </style>
+</head>
+<body class="bg-[#1A202C] text-gray-200">
+    <div id="notification-toast"></div>
+    <div id="pdf-render-container"></div>
+
+    <!-- PROPOSAL SECTION -->
+    <main id="proposal-section" class="container mx-auto p-2 sm:p-4 md:p-8">
+        <header class="text-center py-6 md:py-8">
+            <div class="section-gradient-box p-4 sm:p-8 max-w-5xl">
+                <div class="icon-highlight" style="font-size: 5rem; margin-bottom: 1.5rem;">🗺️</div>
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-bold text-[#4CAF50] leading-tight mb-4 title-shadow">Serramar Trekking</h1>
+                <h2 class="text-2xl sm:text-4xl md:text-5xl font-bold text-[#4CAF50] mb-4 title-shadow">Construindo um Negócio de Aventura Sólido</h2>
+                <p class="text-base sm:text-lg md:text-xl text-white max-w-3xl mx-auto mb-4 title-shadow">
+                    Vamos sair da dependência de indicações e criar um sistema de aquisição de clientes que trabalha para você.
+                </p>
+            </div>
+        </header>
+
+        <section class="py-6 sm:py-8">
+            <div class="section-gradient-box p-4 sm:p-8 max-w-5xl">
+                <h2 class="text-2xl sm:text-4xl font-bold text-[#4CAF50] mb-8 text-center title-shadow">Plano de Ação: A Trilha para o Sucesso</h2>
+                <p class="text-white mt-2 max-w-3xl mx-auto mb-12 text-center title-shadow">Nossa parceria será dividida em fases claras, cada uma com objetivos e entregáveis definidos para garantir um crescimento sustentável e mensurável.</p>
+                
+                <div class="timeline max-w-3xl mx-auto">
+                    <div class="timeline-item">
+                        <div class="timeline-icon">1</div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 title-shadow">Fase 1: Fundação Estratégica (Mês 1)</h3>
+                        <p class="text-gray-300">O alicerce de todo o projeto. Aqui, garantimos que cada real investido seja direcionado com máxima inteligência.</p>
+                        <ul class="list-disc list-inside text-gray-400 mt-4 space-y-1">
+                            <li><strong>Diagnóstico 360°:</strong> Análise de mercado, concorrência e diferenciais da Serramar.</li>
+                            <li><strong>Definição de Avatar:</strong> Mapeamento profundo do cliente ideal (dores, desejos, objeções).</li>
+                            <li><strong>Estruturação de Contas:</strong> Configuração profissional do Gerenciador de Anúncios e Pixel.</li>
+                            <li><strong>Planejamento de Campanhas:</strong> Definição dos primeiros roteiros a serem impulsionados.</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">2</div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 title-shadow">Fase 2: Ativação e Aquisição (Mês 1-2)</h3>
+                        <p class="text-gray-300">Com a base pronta, iniciamos a atração de clientes qualificados, gerando os primeiros resultados e validando as estratégias.</p>
+                        <ul class="list-disc list-inside text-gray-400 mt-4 space-y-1">
+                            <li><strong>Lançamento das Campanhas:</strong> Ativação dos anúncios com foco em conversão (mensagens/leads).</li>
+                            <li><strong>Criação de Anúncios de Impacto:</strong> Desenvolvimento de criativos (vídeos/imagens) e copy persuasiva.</li>
+                            <li><strong>Geração de Fluxo de Leads:</strong> Aumento do volume de contatos interessados nos roteiros.</li>
+                            <li><strong>Primeiras Otimizações:</strong> Análise inicial de métricas e ajustes para melhorar performance.</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">3</div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 title-shadow">Fase 3: Otimização e Escala (Mês 3-4)</h3>
+                        <p class="text-gray-300">É hora de refinar a máquina. Usamos os dados para diminuir custos, aumentar o lucro e preparar para um crescimento acelerado.</p>
+                        <ul class="list-disc list-inside text-gray-400 mt-4 space-y-1">
+                            <li><strong>Análise de Dados e Testes A/B:</strong> Otimização contínua de públicos, criativos e ofertas.</li>
+                            <li><strong>Implementação de Remarketing:</strong> Campanhas para re-impactar quem já demonstrou interesse.</li>
+                            <li><strong>Redução do Custo por Aquisição (CPA):</strong> Foco em tornar a aquisição de clientes mais barata.</li>
+                            <li><strong>Escala Controlada:</strong> Aumento gradual do investimento nos anúncios que mais performam.</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-icon">4</div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 title-shadow">Fase 4: Dominação e Autoridade (Contínuo)</h3>
+                        <p class="text-gray-300">Consolidamos a Serramar Trekking como a principal escolha na região, criando um ativo de marketing de longo prazo.</p>
+                        <ul class="list-disc list-inside text-gray-400 mt-4 space-y-1">
+                            <li><strong>Construção de Funil de Vendas:</strong> Estratégias para nutrir leads e vender múltiplos roteiros.</li>
+                            <li><strong>Expansão de Canais (Opcional):</strong> Testes em outras plataformas como Google Ads.</li>
+                            <li><strong>Fortalecimento da Marca:</strong> Campanhas de alcance e reconhecimento para solidificar a autoridade.</li>
+                            <li><strong>Consultoria Estratégica:</strong> Análise de novas oportunidades de roteiros e ofertas.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-6 sm:py-8">
+            <div class="section-gradient-box p-4 sm:p-8 max-w-6xl">
+                <h2 class="text-2xl sm:text-4xl font-bold text-[#4CAF50] mb-4 text-center title-shadow">Planos de Parceria Estratégica</h2>
+                <p class="text-white mt-2 max-w-3xl mx-auto mb-12 text-center title-shadow">Cada plano foi desenhado para acompanhar uma fase do seu crescimento. O investimento nos anúncios (orçamento diário) é flexível e pago diretamente às plataformas.</p>
+            
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+                    <div class="p-6 rounded-lg strong-shadow-box text-center">
+                        <div class="card-content">
+                            <div class="icon-highlight">🧭</div>
+                            <h3 class="text-xl font-bold text-white title-shadow">Plano Desbravador</h3>
+                            <p class="text-sm text-gray-400">Ideal para Fases 1 e 2</p>
+                            <p class="text-4xl font-bold text-[#4CAF50] mt-4">R$ 900<span class="text-lg font-semibold text-white">/mês</span></p>
+                            <ul class="text-left text-sm text-white mt-6 space-y-2">
+                                <li>✔️ Diagnóstico e Planejamento</li>
+                                <li>✔️ Gestão de até 2 Campanhas</li>
+                                <li>✔️ Foco no Roteiro Principal</li>
+                                <li>✔️ Criação de 4 Criativos/mês</li>
+                                <li>✔️ Segmentação de Público Essencial</li>
+                                <li>✔️ Relatório Quinzenal de Performance</li>
+                            </ul>
+                        </div>
+                        <button class="plan-button mt-6" data-plan="desbravador">Iniciar Jornada</button>
+                    </div>
+
+                    <div class="p-6 rounded-lg strong-shadow-box text-center border-4 border-[#4CAF50] transform scale-105 relative">
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#4CAF50] text-white text-sm font-bold px-4 py-1 rounded-full">MAIS POPULAR</div>
+                         <div class="card-content">
+                            <div class="icon-highlight">🌲</div>
+                            <h3 class="text-xl font-bold text-white title-shadow">Plano Conquistador</h3>
+                            <p class="text-sm text-gray-400">Ideal para Fases 2 e 3</p>
+                            <p class="text-4xl font-bold text-[#4CAF50] mt-4">R$ 1.400<span class="text-lg font-semibold text-white">/mês</span></p>
+                            <ul class="text-left text-sm text-white mt-6 space-y-2">
+                                <li>✔️ <strong>Tudo do Desbravador</strong></li>
+                                <li>✔️ Gestão de até 4 Campanhas</li>
+                                <li>✔️ Criação de 8 Criativos/mês</li>
+                                <li>✔️ <strong>Campanhas de Remarketing</strong></li>
+                                <li>✔️ <strong>Testes A/B para Otimização</strong></li>
+                                <li>✔️ Relatório Semanal Detalhado</li>
+                                <li>✔️ Suporte Prioritário via WhatsApp</li>
+                            </ul>
+                        </div>
+                        <button class="plan-button mt-6" data-plan="conquistador">Acelerar Crescimento</button>
+                    </div>
+
+                    <div class="p-6 rounded-lg strong-shadow-box text-center">
+                         <div class="card-content">
+                            <div class="icon-highlight">🏔️</div>
+                            <h3 class="text-xl font-bold text-white title-shadow">Plano Expedicionário</h3>
+                            <p class="text-sm text-gray-400">Ideal para Fases 3 e 4</p>
+                            <p class="text-4xl font-bold text-[#4CAF50] mt-4">R$ 2.100<span class="text-lg font-semibold text-white">/mês</span></p>
+                            <ul class="text-left text-sm text-white mt-6 space-y-2">
+                                <li>✔️ <strong>Tudo do Conquistador</strong></li>
+                                <li>✔️ Gestão de Campanhas Ilimitadas</li>
+                                <li>✔️ <strong>Desenvolvimento de Funil de Vendas</strong></li>
+                                <li>✔️ Criação de 12 Criativos/mês</li>
+                                <li>✔️ Otimização de Perfil (Instagram)</li>
+                                <li>✔️ Reunião Estratégica Mensal</li>
+                            </ul>
+                        </div>
+                        <button class="plan-button mt-6" data-plan="expedicionario">Dominar o Território</button>
+                    </div>
+                    
+                    <div class="p-6 rounded-lg strong-shadow-box text-center">
+                         <div class="card-content">
+                            <div class="icon-highlight">🏆</div>
+                            <h3 class="text-xl font-bold text-white title-shadow">Plano Cume</h3>
+                            <p class="text-sm text-gray-400">Parceria Estratégica Completa</p>
+                            <p class="text-4xl font-bold text-[#4CAF50] mt-4">R$ 3.000<span class="text-lg font-semibold text-white">/mês</span></p>
+                            <ul class="text-left text-sm text-white mt-6 space-y-2">
+                                <li>✔️ <strong>Tudo do Expedicionário</strong></li>
+                                <li>✔️ <strong>Gestão Multi-Canal (Google Ads)</strong></li>
+                                <li>✔️ Acompanhamento de Vendas</li>
+                                <li>✔️ Consultoria de Negócio Contínua</li>
+                                <li>✔️ Relatórios Gerenciais Avançados</li>
+                                <li>✔️ Acesso Direto e Imediato</li>
+                            </ul>
+                        </div>
+                        <button class="plan-button mt-6" data-plan="cume">Alcançar o Cume</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="py-6 sm:py-8 text-center">
+            <div class="section-gradient-box p-4 sm:p-8 max-w-4xl">
+                <h2 class="text-2xl sm:text-4xl font-bold text-[#4CAF50] mb-4 flex items-center justify-center title-shadow">
+                    <span class="icon-highlight mr-4">🚀</span> Próximo Passo: Iniciar a Jornada
+                </h2>
+                <p class="text-base sm:text-lg text-white max-w-3xl mx-auto mb-8 title-shadow">
+                    Roger, este plano é o mapa para levarmos a Serramar Trekking ao próximo nível. Com consistência e estratégia, os resultados são uma consequência natural. Meu compromisso é com o seu crescimento.
+                </p>
+                <p class="text-base sm:text-lg text-white max-w-3xl mx-auto mb-8 title-shadow">
+                    <strong>Bônus de Ação Rápida:</strong> Ao iniciarmos a parceria nos próximos <strong>2 dias</strong>, eu incluo a <strong>análise e otimização completa do seu perfil no Instagram</strong> para maximizar a conversão do tráfego que vamos gerar.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <!-- CONTRACT SECTION (Initially Hidden) -->
+    <section id="contract-section" class="hidden container mx-auto p-2 sm:p-4 md:p-8">
+        <div class="bg-[#1A202C] rounded-lg shadow-lg p-4 sm:p-6 section-gradient-box">
+            <header class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-[#4CAF50]">Contrato de Gestão de Performance</h1>
+                <p id="contract-header-subtitle" class="text-gray-300 mt-2">Serramar Trekking & Matheus Henrique Laurindo</p>
+            </header>
+
+            <nav id="contract-tabs" class="flex flex-wrap border-b border-gray-700 mb-6">
+                <button data-tab="overview" class="tab-button active text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Visão Geral</button>
+                <button data-tab="parties" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Partes</button>
+                <button data-tab="services" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Serviços</button>
+                <button data-tab="financial" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Financeiro</button>
+                <button data-tab="term" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Prazo e Rescisão</button>
+                <button data-tab="obligations" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Obrigações</button>
+                <button data-tab="confidentiality" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Confidencialidade</button>
+                <button data-tab="signatures" class="tab-button text-sm sm:text-base font-medium py-3 px-3 sm:px-5 border-b-2 border-transparent hover:border-teal-500 hover:text-teal-500">Assinaturas</button>
+            </nav>
+
+            <main id="contract-content">
+                <!-- Overview -->
+                <section id="overview" class="tab-content prose max-w-none text-gray-300">
+                    <p class="mb-6">Esta é uma visão geral dos termos mais importantes. Para detalhes completos, navegue pelas abas. Este painel resume o acordo para facilitar o entendimento.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-[#2D3748] p-6 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2 text-teal-400">Objeto Principal</h3>
+                            <p id="overview-main-objective">Gestão de Performance de Marketing Digital para a Serramar Trekking.</p>
+                        </div>
+                        <div class="bg-[#2D3748] p-6 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2 text-teal-400">Valor Mensal (Plano Selecionado)</h3>
+                            <p id="overview-price" class="text-2xl font-bold">--</p>
+                        </div>
+                        <div class="bg-[#2D3748] p-6 rounded-lg">
+                            <h3 class="font-bold text-lg mb-2 text-teal-400">Prazo do Contrato</h3>
+                            <p class="text-2xl font-bold">6 meses</p>
+                            <p class="text-sm text-gray-400">Com renovação automática.</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Parties -->
+                <section id="parties" class="tab-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-gray-700 rounded-lg p-6">
+                            <h3 class="font-bold text-xl mb-4 text-teal-500">CONTRATANTE (Serramar Trekking)</h3>
+                            <div id="contratante-display" class="hidden space-y-2">
+                                <p><strong>Razão Social:</strong> <span id="display-nome-completo"></span></p>
+                                <p><strong>CPF/CNPJ:</strong> <span id="display-cnpj"></span></p>
+                                <p><strong>Endereço:</strong> <span id="display-endereco"></span></p>
+                                <p><strong>Telefone:</strong> <span id="display-telefone"></span></p>
+                                <p><strong>E-mail:</strong> <span id="display-email"></span></p>
+                                <button id="edit-contratante-btn" class="mt-4 px-4 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-600">Editar Dados</button>
+                            </div>
+                            <div id="contratante-form" class="form-section">
+                                <div class="input-group"><label for="input-nome-completo">Nome Completo/Razão Social:</label><input type="text" id="input-nome-completo" placeholder="Nome Completo/Razão Social" autocomplete="off"></div>
+                                <div class="input-group"><label for="input-cnpj">CPF/CNPJ:</label><input type="text" id="input-cnpj" placeholder="CPF ou CNPJ" autocomplete="off"></div>
+                                <div class="input-group"><label for="input-endereco">Endereço:</label><input type="text" id="input-endereco" placeholder="Endereço Completo" autocomplete="off"></div>
+                                <div class="input-group"><label for="input-telefone">Telefone:</label><input type="text" id="input-telefone" placeholder="Telefone com DDD" autocomplete="off"></div>
+                                <div class="input-group"><label for="input-email">E-mail:</label><input type="email" id="input-email" placeholder="E-mail de contato" autocomplete="off"></div>
+                                <button id="save-contratante-btn" class="mt-2 px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600">Salvar Dados</button>
+                            </div>
+                        </div>
+                        <div class="border border-gray-700 rounded-lg p-6">
+                            <h3 class="font-bold text-xl mb-4 text-teal-500">CONTRATADO</h3>
+                            <p><strong>Nome:</strong> Matheus Henrique Laurindo</p>
+                            <p><strong>CPF:</strong> 100.936.909-16</p>
+                            <p><strong>Endereço:</strong> Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, 89037-740</p>
+                            <p><strong>Telefone:</strong> (47) 99217-6490</p>
+                            <p><strong>E-mail:</strong> laurindomatheus40@gmail.com</p>
+                        </div>
+                    </div>
+                </section>
+                <!-- Services -->
+                <section id="services" class="tab-content hidden prose max-w-none text-gray-300">
+                    <h2 class="text-teal-500">CLÁUSULA PRIMEIRA – DO OBJETO DO CONTRATO</h2>
+                    <p>O presente Contrato tem como objeto a prestação de serviços de Gestão de Performance de Marketing Digital pelo CONTRATADO para o CONTRATANTE, com foco em:</p>
+                    <ul id="service-list" class="list-disc list-inside space-y-2">
+                        <!-- Service items will be populated by JS -->
+                    </ul>
+                </section>
+                <!-- Financial -->
+                <section id="financial" class="tab-content hidden prose max-w-none text-gray-300">
+                    <h2 class="text-teal-500">CLÁUSULA SEGUNDA – DO VALOR E FORMA DE PAGAMENTO</h2>
+                    <p>Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor mensal de <strong id="financial-price" class="text-xl text-teal-400"></strong>.</p>
+                    <p>O pagamento será recorrente, com a primeira cobrança na data de assinatura deste contrato e as subsequentes a cada 30 dias.</p>
+                    <p>O investimento em anúncios (orçamento de mídia) é de responsabilidade do CONTRATANTE e será pago diretamente às plataformas (ex: Facebook, Google).</p>
+                </section>
+                <!-- Term and Termination -->
+                <section id="term" class="tab-content hidden prose max-w-none text-gray-300">
+                    <h2 class="text-teal-500">CLÁUSULA TERCEIRA – DO PRAZO E DA RESCISÃO</h2>
+                    <p>3.1. O presente contrato terá vigência de 6 (seis) meses, a contar da data de sua assinatura, sendo renovado automaticamente por iguais períodos, caso não haja manifestação contrária de qualquer das partes.</p>
+                    <p>3.2. Qualquer das partes poderá rescindir o presente contrato, a qualquer tempo, sem qualquer ônus, desde que notifique a outra parte, por escrito, com antecedência mínima de 30 (trinta) dias.</p>
+                    <p>3.3. Em caso de rescisão antecipada e imotivada por parte do CONTRATANTE antes do término do prazo inicial de 6 meses, será devida multa no valor de 20% sobre o valor restante do contrato.</p>
+                </section>
+                <!-- Obligations -->
+                <section id="obligations" class="tab-content hidden prose max-w-none text-gray-300">
+                     <h2 class="text-teal-500">CLÁUSULA QUARTA – DAS OBRIGAÇÕES</h2>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATADO</h3>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>Prestar os serviços descritos na Cláusula Primeira com zelo e profissionalismo.</li>
+                                <li>Manter o CONTRATANTE informado sobre o andamento das campanhas através dos relatórios.</li>
+                                <li>Manter sigilo sobre todas as informações do CONTRATANTE.</li>
+                                <li>Não utilizar os materiais do CONTRATANTE para outros fins que não os do presente contrato.</li>
+                            </ul>
+                        </div>
+                        <div>
+                             <h3 class="font-bold text-lg mb-2 text-teal-400">Obrigações do CONTRATANTE</h3>
+                            <ul class="list-disc list-inside space-y-2">
+                                <li>Realizar os pagamentos mensais pontualmente.</li>
+                                <li>Fornecer ao CONTRATADO todos os acessos e informações necessárias para a execução dos serviços.</li>
+                                <li>Realizar o pagamento do investimento em mídia diretamente às plataformas de anúncio.</li>
+                                <li>Aprovar os criativos e estratégias propostas em tempo hábil.</li>
+                            </ul>
+                        </div>
+                     </div>
+                </section>
+                <!-- Confidentiality -->
+                <section id="confidentiality" class="tab-content hidden prose max-w-none text-gray-300">
+                    <h2 class="text-teal-500">CLÁUSULA QUINTA – DA CONFIDENCIALIDADE</h2>
+                    <p>As partes se comprometem a manter em absoluto sigilo e confidencialidade todas as informações, dados, materiais e documentos relacionados ao objeto deste contrato, não podendo, sob qualquer pretexto, divulgá-los, revelá-los, reproduzi-los ou dar conhecimento deles a terceiros.</p>
+                </section>
+                <!-- Signatures -->
+                <section id="signatures" class="tab-content hidden prose max-w-none text-gray-300">
+                    <p>E, por estarem assim justas e contratadas, as partes assinam o presente Contrato.</p>
+                    <p id="signature-date-location" class="font-semibold"></p>
+                    <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12 text-center">
+                        <div>
+                            <p class="text-lg">Assinatura do Contratante:</p>
+                            <div class="mt-4 flex flex-col items-center">
+                                <canvas id="signature-canvas" class="signature-canvas w-full max-w-sm h-32 rounded-md"></canvas>
+                                <button id="clear-signature-btn" class="mt-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Limpar</button>
+                            </div>
+                        </div>
+                        <div>
+                             <p class="text-lg">Assinatura do Contratado:</p>
+                             <div class="mt-4 text-2xl font-serif italic text-teal-300">Matheus Henrique Laurindo</div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-12">
+                        <button id="proceed-to-checkout-btn" class="plan-button text-lg bg-green-500 hover:bg-green-600">Assinar, Gerar PDF e Pagar</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </section>
+
+    <!-- CHECKOUT SECTION (Initially Hidden) -->
+    <section id="checkout-section" class="hidden container mx-auto p-2 sm:p-4 md:p-8">
+         <div class="section-gradient-box p-4 sm:p-8 max-w-2xl mx-auto">
+             <header class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-[#4CAF50]">Finalizar Pagamento</h1>
+                <p id="checkout-summary" class="text-gray-300 mt-2">Plano selecionado: <span class="font-bold text-teal-400"></span></p>
+            </header>
+            <div class="flex justify-center">
+                <div id="pix-container" class="p-6 rounded-lg strong-shadow-box text-center w-full md:w-2/3">
+                    <!-- PIX content will be populated by JS -->
+                </div>
+            </div>
+            <div class="text-center mt-8">
+                 <button id="back-to-proposal-btn" class="text-teal-400 hover:text-teal-300">&larr; Voltar para a Proposta</button>
+            </div>
+         </div>
+    </section>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let db, auth, userId, appId;
+        let selectedPlan = {};
+        let currentClientData = null; // Local state for client data
+        
+        const planDetails = {
+            desbravador: { name: "Plano Desbravador", price: "R$ 900,00", services: ["Diagnóstico 360° e Planejamento Estratégico.", "Gestão de até 2 campanhas de marketing simultâneas.", "Foco no roteiro principal para máxima tração inicial.", "Criação de 4 anúncios (criativos) por mês.", "Segmentação de público-alvo essencial.", "Envio de relatório quinzenal de performance."] },
+            conquistador: { name: "Plano Conquistador", price: "R$ 1.400,00", services: ["Todos os itens do Plano Desbravador.", "Gestão de até 4 campanhas de marketing simultâneas.", "Criação de 8 anúncios (criativos) por mês.", "Implementação de campanhas de Remarketing para re-impactar interessados.", "Realização de Testes A/B para otimização contínua de anúncios.", "Envio de relatório semanal detalhado de performance.", "Suporte prioritário via WhatsApp."] },
+            expedicionario: { name: "Plano Expedicionário", price: "R$ 2.100,00", services: ["Todos os itens do Plano Conquistador.", "Gestão de campanhas de marketing ilimitadas.", "Desenvolvimento e implementação de Funil de Vendas.", "Criação de 12 anúncios (criativos) por mês.", "Otimização de perfil e biografia do Instagram.", "Realização de reunião estratégica mensal."] },
+            cume: { name: "Plano Cume", price: "R$ 3.000,00", services: ["Todos os itens do Plano Expedicionário.", "Gestão de marketing multi-canal (incluindo Google Ads).", "Acompanhamento de métricas de vendas e ROI.", "Consultoria de negócio contínua para novas oportunidades.", "Envio de relatórios gerenciais avançados.", "Acesso direto e imediato para alinhamentos estratégicos."] }
+        };
+
+        const proposalSection = document.getElementById('proposal-section');
+        const contractSection = document.getElementById('contract-section');
+        const checkoutSection = document.getElementById('checkout-section');
+        const notificationToast = document.getElementById('notification-toast');
+
+        function showNotification(message, type = 'info', duration = 4000) {
+            notificationToast.textContent = message;
+            notificationToast.className = `show ${type}`;
+            setTimeout(() => { notificationToast.className = notificationToast.className.replace('show', ''); }, duration);
+        }
+
+        async function initializeFirebase() {
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyCicY5hMUnda0WpFO7clIlCSu9ZrtLXfhA",
+                    authDomain: "serralead-navigator.firebaseapp.com",
+                    projectId: "serralead-navigator",
+                    storageBucket: "serralead-navigator.appspot.com",
+                    messagingSenderId: "1020242811944",
+                    appId: "1:1020242811944:web:6bbabc26382abbbc4fa91d"
+                };
+                appId = firebaseConfig.appId;
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                userId = auth.currentUser.uid;
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                if (error.code === 'auth/configuration-not-found') {
+                    showNotification("FALHA NA CONEXÃO: Habilite a 'Autenticação Anônima' no seu painel do Firebase.", "error", 10000);
+                } else {
+                    showNotification("Erro ao conectar com o sistema.", "error");
+                }
+            }
+        }
+
+        function setupContract(planKey) {
+            selectedPlan = planDetails[planKey];
+            document.getElementById('contract-header-subtitle').textContent = `Serramar Trekking & Matheus Henrique Laurindo - ${selectedPlan.name}`;
+            const serviceList = document.getElementById('service-list');
+            serviceList.innerHTML = '';
+            selectedPlan.services.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                serviceList.appendChild(li);
+            });
+            document.getElementById('overview-price').textContent = selectedPlan.price;
+            document.getElementById('financial-price').textContent = selectedPlan.price;
+            document.getElementById('signature-date-location').textContent = `Blumenau, Santa Catarina, ${new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+            proposalSection.classList.add('hidden');
+            checkoutSection.classList.add('hidden');
+            contractSection.classList.remove('hidden');
+            document.querySelector('#contract-tabs .tab-button[data-tab="overview"]').click();
+            window.scrollTo(0, 0);
+        }
+        
+        async function generateContractPDF(clientData, signatureDataURL) {
+            showNotification("Gerando PDF do contrato, por favor aguarde...", "info", 8000);
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const pdfContainer = document.getElementById('pdf-render-container');
+
+            pdfContainer.innerHTML = `
+                <div class="pdf-page">
+                    <h2>Visão Geral do Contrato</h2>
+                    <h3>Plano: ${selectedPlan.name}</h3>
+                    <p><strong>Valor Mensal:</strong> ${selectedPlan.price}</p>
+                    <p><strong>Objeto:</strong> Gestão de Performance de Marketing Digital para a Serramar Trekking.</p>
+                    <p><strong>Prazo Inicial:</strong> 6 meses.</p>
+                </div>
+                <div class="pdf-page">
+                    <h2>Partes Envolvidas</h2>
+                    <h3>CONTRATANTE</h3>
+                    <p><strong>Razão Social:</strong> ${clientData.nomeCompleto}</p>
+                    <p><strong>CPF/CNPJ:</strong> ${clientData.cnpj}</p>
+                    <p><strong>Endereço:</strong> ${clientData.endereco}</p>
+                    <p><strong>Telefone:</strong> ${clientData.telefone}</p>
+                    <p><strong>E-mail:</strong> ${clientData.email}</p>
+                    <h3>CONTRATADO</h3>
+                    <p><strong>Nome:</strong> Matheus Henrique Laurindo</p>
+                    <p><strong>CPF:</strong> 100.936.909-16</p>
+                    <p><strong>Endereço:</strong> Rua Aquidabã, 199, Escola Agrícola, Blumenau, SC, 89037-740</p>
+                    <p><strong>Telefone:</strong> (47) 99217-6490</p>
+                    <p><strong>E-mail:</strong> laurindomatheus40@gmail.com</p>
+                </div>
+                <div class="pdf-page">
+                    <h2>CLÁUSULA PRIMEIRA – DO OBJETO DO CONTRATO</h2>
+                    <p>O presente Contrato tem como objeto a prestação de serviços de Gestão de Performance de Marketing Digital pelo CONTRATADO para o CONTRATANTE, com foco em:</p>
+                    <ul>${selectedPlan.services.map(s => `<li>${s}</li>`).join('')}</ul>
+                </div>
+                <div class="pdf-page">
+                    <h2>CLÁUSULA SEGUNDA – DO VALOR E FORMA DE PAGAMENTO</h2>
+                    <p>Pelos serviços prestados, o CONTRATANTE pagará ao CONTRATADO o valor mensal de <strong>${selectedPlan.price}</strong>.</p>
+                    <p>O pagamento será recorrente, com a primeira cobrança na data de assinatura deste contrato e as subsequentes a cada 30 dias.</p>
+                    <p>O investimento em anúncios (orçamento de mídia) é de responsabilidade do CONTRATANTE e será pago diretamente às plataformas (ex: Facebook, Google).</p>
+                </div>
+                <div class="pdf-page">
+                    <h2>CLÁUSULA TERCEIRA – DO PRAZO E DA RESCISÃO</h2>
+                    <p>3.1. O presente contrato terá vigência de 6 (seis) meses, a contar da data de sua assinatura, sendo renovado automaticamente por iguais períodos, caso não haja manifestação contrária de qualquer das partes.</p>
+                    <p>3.2. Qualquer das partes poderá rescindir o presente contrato, a qualquer tempo, sem qualquer ônus, desde que notifique a outra parte, por escrito, com antecedência mínima de 30 (trinta) dias.</p>
+                    <p>3.3. Em caso de rescisão antecipada e imotivada por parte do CONTRATANTE antes do término do prazo inicial de 6 meses, será devida multa no valor de 20% sobre o valor restante do contrato.</p>
+                </div>
+                <div class="pdf-page">
+                    <h2>CLÁUSULA QUARTA – DAS OBRIGAÇÕES</h2>
+                    <h3>Obrigações do CONTRATADO</h3>
+                    <ul>
+                        <li>Prestar os serviços descritos na Cláusula Primeira com zelo e profissionalismo.</li>
+                        <li>Manter o CONTRATANTE informado sobre o andamento das campanhas através dos relatórios.</li>
+                        <li>Manter sigilo sobre todas as informações do CONTRATANTE.</li>
+                        <li>Não utilizar os materiais do CONTRATANTE para outros fins que não os do presente contrato.</li>
+                    </ul>
+                    <h3>Obrigações do CONTRATANTE</h3>
+                    <ul>
+                        <li>Realizar os pagamentos mensais pontualmente.</li>
+                        <li>Fornecer ao CONTRATADO todos os acessos e informações necessárias para a execução dos serviços.</li>
+                        <li>Realizar o pagamento do investimento em mídia diretamente às plataformas de anúncio.</li>
+                        <li>Aprovar os criativos e estratégias propostas em tempo hábil.</li>
+                    </ul>
+                </div>
+                <div class="pdf-page">
+                    <h2>CLÁUSULA QUINTA – DA CONFIDENCIALIDADE</h2>
+                    <p>As partes se comprometem a manter em absoluto sigilo e confidencialidade todas as informações, dados, materiais e documentos relacionados ao objeto deste contrato, não podendo, sob qualquer pretexto, divulgá-los, revelá-los, reproduzi-los ou dar conhecimento deles a terceiros.</p>
+                </div>
+                <div class="pdf-page">
+                    <h2>Assinaturas</h2>
+                    <p>E, por estarem assim justas e contratadas, as partes assinam o presente Contrato.</p>
+                    <p><strong>Local e Data:</strong> Blumenau, Santa Catarina, ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <br/><br/>
+                    <img src="${signatureDataURL}" style="width: 150px; height: auto; border-bottom: 1px solid #000; padding-bottom: 2px;"/>
+                    <p style="margin-top: 2px;">${clientData.nomeCompleto}</p>
+                    <p style="font-size: 10pt;">CONTRATANTE</p>
+                    <br/><br/><br/>
+                    <p style="font-family: 'Brush Script MT', cursive; font-size: 24pt; border-bottom: 1px solid #000; padding-bottom: 2px; width: 250px;">Matheus Henrique Laurindo</p>
+                    <p style="margin-top: 2px;">Matheus Henrique Laurindo</p>
+                    <p style="font-size: 10pt;">CONTRATADO</p>
+                </div>
+            `;
+
+            const canvas = await html2canvas(pdfContainer, { scale: 2, useCORS: true, windowWidth: pdfContainer.scrollWidth, windowHeight: pdfContainer.scrollHeight });
+            const imgData = canvas.toDataURL('image/png');
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = doc.internal.pageSize.getHeight();
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const ratio = canvasHeight / canvasWidth;
+            const imgHeight = pdfWidth * ratio;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+
+            while (heightLeft > 0) {
+                position -= pdfHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pdfHeight;
+            }
+            
+            doc.save(`Contrato_${clientData.nomeCompleto.replace(/\s/g, '_')}_${selectedPlan.name.replace(/\s/g, '_')}.pdf`);
+            showNotification("PDF gerado com sucesso!", "success");
+            pdfContainer.innerHTML = ''; // Clean up
+        }
+
+        function copyPixKey() {
+            const pixKeyInput = document.getElementById('pix-key-input');
+            pixKeyInput.select();
+            pixKeyInput.setSelectionRange(0, 99999); 
+            try {
+                document.execCommand('copy');
+                showNotification("Chave PIX copiada!", "success");
+            } catch (err) {
+                showNotification("Erro ao copiar a chave.", "error");
+            }
+        }
+
+        function showCheckout() {
+            document.getElementById('checkout-summary').querySelector('span').textContent = selectedPlan.name;
+            const pixContainer = document.getElementById('pix-container');
+            const pixKeyDesbravador = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed795204000053039865406900.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481225335ASA63043439";
+            const pixKeyConquistador = "00020126800014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed790218Plano Conquistador52040000530398654071400.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481261877ASA6304733F";
+            const pixKeyExpedicionario = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654072100.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481299721ASA63042A32";
+            const pixKeyCume = "00020126580014br.gov.bcb.pix01361deca4c9-3098-45aa-bafe-533efe88ed7952040000530398654073000.005802BR5925Matheus Henrique Laurindo6008Blumenau62290525MATHEUSH00000481300745ASA63048680";
+            
+            let pixKey = '';
+            if (selectedPlan.name === "Plano Desbravador") {
+                pixKey = pixKeyDesbravador;
+            } else if (selectedPlan.name === "Plano Conquistador") {
+                pixKey = pixKeyConquistador;
+            } else if (selectedPlan.name === "Plano Expedicionário") {
+                pixKey = pixKeyExpedicionario;
+            } else if (selectedPlan.name === "Plano Cume") {
+                pixKey = pixKeyCume;
+            }
+
+            if (pixKey) {
+                pixContainer.innerHTML = `
+                    <h3 class="text-xl font-bold text-white title-shadow mb-4">PIX</h3>
+                    <p class="text-gray-400 mb-4">Aponte a câmera do seu celular para o QR Code.</p>
+                    <div class="bg-white p-2 rounded-md inline-block">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(pixKey)}" alt="QR Code PIX">
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-xs text-gray-400">Ou copie a chave:</p>
+                        <div class="flex items-center justify-center mt-1">
+                            <input type="text" id="pix-key-input" class="bg-gray-800 text-gray-300 text-xs p-1 rounded-l-md w-full" value="${pixKey}" readonly>
+                            <button id="copy-pix-key-btn" class="bg-teal-500 text-white p-2 rounded-r-md hover:bg-teal-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('copy-pix-key-btn').addEventListener('click', copyPixKey);
+            } else {
+                pixContainer.innerHTML = `
+                    <h3 class="text-xl font-bold text-white title-shadow mb-4">PIX</h3>
+                    <p class="text-gray-400 mb-4">Entre em contato para solicitar a chave PIX para este plano.</p>
+                    <div class="bg-gray-700 p-2 rounded-md inline-flex items-center justify-center w-[166px] h-[166px]">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                `;
+            }
+
+            contractSection.classList.add('hidden');
+            checkoutSection.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeFirebase();
+
+            document.querySelectorAll('.plan-button[data-plan]').forEach(button => {
+                button.addEventListener('click', () => setupContract(button.getAttribute('data-plan')));
+            });
+
+            const tabs = document.querySelectorAll('#contract-tabs .tab-button');
+            const tabContents = document.querySelectorAll('#contract-content .tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        content.classList.toggle('hidden', content.id !== targetId);
+                    });
+                });
+            });
+            
+            const contratanteDisplay = document.getElementById('contratante-display');
+            const contratanteForm = document.getElementById('contratante-form');
+            const editContratanteBtn = document.getElementById('edit-contratante-btn');
+            
+            document.getElementById('save-contratante-btn').addEventListener('click', async () => {
+                const dataToSave = {
+                    nomeCompleto: document.getElementById('input-nome-completo').value,
+                    cnpj: document.getElementById('input-cnpj').value,
+                    endereco: document.getElementById('input-endereco').value,
+                    telefone: document.getElementById('input-telefone').value,
+                    email: document.getElementById('input-email').value,
+                };
+                if (!dataToSave.nomeCompleto || !dataToSave.cnpj) {
+                    showNotification("Nome e CPF/CNPJ são obrigatórios.", "error");
+                    return;
+                }
+
+                currentClientData = dataToSave; // Save to local variable
+                
+                document.getElementById('display-nome-completo').textContent = dataToSave.nomeCompleto;
+                document.getElementById('display-cnpj').textContent = dataToSave.cnpj;
+                document.getElementById('display-endereco').textContent = dataToSave.endereco;
+                document.getElementById('display-telefone').textContent = dataToSave.telefone;
+                document.getElementById('display-email').textContent = dataToSave.email;
+                
+                contratanteForm.classList.add('hidden');
+                contratanteDisplay.classList.remove('hidden');
+                showNotification("Dados do contratante salvos com sucesso.", "success");
+            });
+
+            editContratanteBtn.addEventListener('click', () => {
+                contratanteDisplay.classList.add('hidden');
+                contratanteForm.classList.remove('hidden');
+            });
+
+            const signatureCanvas = document.getElementById('signature-canvas');
+            const signatureCtx = signatureCanvas.getContext('2d');
+            let drawing = false;
+
+            const getCoords = (e) => {
+                const rect = signatureCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            }
+
+            const startDrawing = (e) => { e.preventDefault(); drawing = true; const { x, y } = getCoords(e); signatureCtx.moveTo(x, y); };
+            const endDrawing = () => { drawing = false; signatureCtx.beginPath(); };
+            const draw = (e) => {
+                if (!drawing) return;
+                e.preventDefault();
+                const { x, y } = getCoords(e);
+                signatureCtx.lineWidth = 2;
+                signatureCtx.lineCap = 'round';
+                signatureCtx.strokeStyle = '#000000';
+                signatureCtx.lineTo(x, y);
+                signatureCtx.stroke();
+                signatureCtx.beginPath();
+                signatureCtx.moveTo(x, y);
+            };
+
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mouseup', endDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseout', endDrawing);
+            signatureCanvas.addEventListener('touchstart', startDrawing);
+            signatureCanvas.addEventListener('touchend', endDrawing);
+            signatureCanvas.addEventListener('touchmove', draw);
+
+            document.getElementById('clear-signature-btn').addEventListener('click', () => {
+                signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+            });
+
+            document.getElementById('proceed-to-checkout-btn').addEventListener('click', async () => {
+                if (!currentClientData) {
+                    showNotification("Por favor, preencha e salve os dados do contratante na aba 'Partes'.", "error");
+                    document.querySelector('[data-tab="parties"]').click();
+                    return;
+                }
+                
+                const docId = currentClientData.cnpj ? currentClientData.cnpj.replace(/\D/g,'') : '';
+
+                if (!currentClientData.nomeCompleto || !docId || !currentClientData.email) {
+                    showNotification("Dados do contratante incompletos. Por favor, verifique e salve novamente na aba 'Partes'.", "error");
+                    document.querySelector('[data-tab="parties"]').click();
+                    return;
+                }
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = signatureCanvas.width;
+                tempCanvas.height = signatureCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.fillStyle = '#f7fafc';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(signatureCanvas, 0, 0);
+                const signatureDataURL = tempCanvas.toDataURL('image/png');
+
+                const emptyCanvas = document.createElement('canvas');
+                emptyCanvas.width = signatureCanvas.width;
+                emptyCanvas.height = signatureCanvas.height;
+                if (signatureDataURL === emptyCanvas.toDataURL()) {
+                     showNotification("A assinatura do contratante é obrigatória.", "error");
+                     document.querySelector('[data-tab="signatures"]').click();
+                     return;
+                }
+
+                const contractData = {
+                    ...currentClientData,
+                    planName: selectedPlan.name,
+                    planPrice: selectedPlan.price,
+                    planServices: selectedPlan.services,
+                    signature: signatureDataURL,
+                    signedAt: new Date().toISOString()
+                };
+
+                try {
+                    if (!userId) throw new Error("Usuário não autenticado.");
+                    const finalContractRef = doc(db, 'artifacts', appId, 'public', 'data', 'contracts', docId);
+                    await setDoc(finalContractRef, contractData);
+                    showNotification("Contrato salvo com sucesso no banco de dados!", "success");
+                    
+                    await generateContractPDF(currentClientData, signatureDataURL);
+                    
+                    showCheckout();
+
+                } catch (error) {
+                    console.error("Error saving/generating contract:", error);
+                    showNotification("Erro ao processar o contrato. Tente novamente.", "error");
+                }
+            });
+
+            document.getElementById('back-to-proposal-btn').addEventListener('click', () => {
+                checkoutSection.classList.add('hidden');
+                proposalSection.classList.remove('hidden');
+                window.scrollTo(0,0);
+            });
+        });
+    </script>
+</body>
+</html>
